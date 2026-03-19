@@ -1,0 +1,2235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XELGEN · Cell Intelligence Platform</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+:root {
+  --bg:#0a0a0a; --bg2:#111111; --bg3:#161616; --bg4:#1c1c1c;
+  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
+  --text:#e8e6e0; --text2:#8a887f; --text3:#4a4844;
+  --accent:#c8f060; --accent2:#9dd63a; --accent-dim:rgba(200,240,96,0.12); --accent-dim2:rgba(200,240,96,0.06);
+  --teal:#3de8b0; --teal-dim:rgba(61,232,176,0.1);
+  --coral:#ff6b4a; --coral-dim:rgba(255,107,74,0.1);
+  --amber:#f0b429; --amber-dim:rgba(240,180,41,0.1);
+  --blue:#5b9cf6; --blue-dim:rgba(91,156,246,0.1);
+  --r:8px; --r2:12px; --r3:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:56px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:baseline;gap:8px}
+.logo-mark{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;letter-spacing:.15em;color:var(--accent)}
+.logo-sub{font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);padding:4px 10px;border-radius:20px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-dot.active{animation:pulse 2s ease-in-out infinite}
+.api-key-btn{font-size:11px;font-family:'DM Mono',monospace;padding:5px 12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:var(--r);cursor:pointer;transition:all .15s}
+.api-key-btn:hover{border-color:var(--accent);color:var(--accent)}
+.api-key-btn.configured{border-color:var(--teal);color:var(--teal)}
+
+.app{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px)}
+.sidebar{border-right:1px solid var(--border);padding:1.5rem 0;background:var(--bg);position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+.sidebar-section{padding:0 1.25rem;margin-bottom:1.5rem}
+.sidebar-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.75rem;font-family:'DM Mono',monospace}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:2px;transition:all .15s;border:1px solid transparent}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-dim);border-color:rgba(200,240,96,0.2);color:var(--accent)}
+.nav-icon{width:16px;height:16px;opacity:.6;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;font-size:10px;font-family:'DM Mono',monospace;background:var(--bg4);color:var(--text3);padding:1px 6px;border-radius:4px}
+.nav-item.active .nav-badge{background:rgba(200,240,96,0.15);color:var(--accent2)}
+
+.pipeline-steps{padding:0 1.25rem}
+.step-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;font-size:12px;color:var(--text3);position:relative}
+.step-item+.step-item::before{content:'';position:absolute;left:9px;top:-8px;width:1px;height:14px;background:var(--border)}
+.step-num{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace;background:var(--bg3);border:1px solid var(--border);color:var(--text3)}
+.step-item.done .step-num{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.step-item.active-step .step-num{background:var(--accent);color:#000;font-weight:500}
+.step-item.done,.step-item.active-step{color:var(--text2)}
+.step-name{font-size:12px;line-height:1.3}
+.step-desc{font-size:10px;color:var(--text3);margin-top:1px}
+
+.main{overflow-y:auto}
+.view{display:none;padding:2rem 2.5rem}
+.view.active{display:block}
+.page-header{margin-bottom:2rem}
+.page-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem}
+.page-title{font-family:'Instrument Serif',serif;font-size:28px;color:var(--text);line-height:1.2;margin-bottom:.5rem}
+.page-sub{font-size:13px;color:var(--text2);max-width:560px;line-height:1.7}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:1.25rem 1.5rem;margin-bottom:1rem}
+.card-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:.25rem}
+.card-sub{font-size:12px;color:var(--text2)}
+
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--r2);padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);margin-bottom:1rem;position:relative}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:var(--accent-dim2)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{width:40px;height:40px;margin:0 auto 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.upload-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:.25rem}
+.upload-sub{font-size:12px;color:var(--text2)}
+.upload-meta{font-size:11px;color:var(--text3);margin-top:.5rem;font-family:'DM Mono',monospace}
+
+.file-loaded{display:none;align-items:center;gap:12px;padding:12px 16px;background:var(--accent-dim);border:1px solid rgba(200,240,96,0.2);border-radius:var(--r);margin-bottom:1rem}
+.file-loaded.show{display:flex}
+.file-icon{width:32px;height:32px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-name{font-size:13px;font-weight:500;color:var(--text)}
+.file-meta{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace}
+.file-remove{margin-left:auto;font-size:11px;color:var(--text3);cursor:pointer;background:none;border:none}
+.file-remove:hover{color:var(--coral)}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);font-family:'DM Mono',monospace}
+input[type=text],input[type=number],input[type=password],select,textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;transition:border-color .15s;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--bg3)}
+textarea{resize:vertical;min-height:72px}
+
+.protocol-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1rem}
+.proto-toggle{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s}
+.proto-toggle.on{background:var(--accent-dim);border-color:rgba(200,240,96,0.3)}
+.proto-toggle input{display:none}
+.proto-check{width:16px;height:16px;border-radius:4px;flex-shrink:0;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.proto-toggle.on .proto-check{background:var(--accent);border-color:var(--accent)}
+.proto-check svg{display:none}
+.proto-toggle.on .proto-check svg{display:block}
+.proto-label{font-size:12px;color:var(--text2)}
+.proto-toggle.on .proto-label{color:var(--text)}
+
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
+.btn-ghost{background:none;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.pipeline-visual{display:flex;align-items:center;gap:0;margin-bottom:2rem;overflow-x:auto;padding-bottom:.5rem}
+.pipe-stage{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px;flex-shrink:0}
+.pipe-circle{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:13px;color:var(--text3);transition:all .4s}
+.pipe-circle.done{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.pipe-circle.running{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
+.pipe-circle.error{background:var(--coral-dim);border-color:var(--coral);color:var(--coral)}
+.pipe-label{font-size:11px;color:var(--text3);text-align:center;line-height:1.3}
+.pipe-circle.done+.pipe-label{color:var(--text2)}
+.pipe-connector{width:40px;height:1px;background:var(--border);flex-shrink:0;margin-top:-20px}
+.pipe-connector.done{background:var(--accent);opacity:.5}
+
+.process-log{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:1.25rem;margin-bottom:1rem;font-family:'DM Mono',monospace;font-size:12px;max-height:320px;overflow-y:auto}
+.log-line{color:var(--text3);line-height:1.9}
+.log-line.info{color:var(--text2)}
+.log-line.success{color:var(--accent)}
+.log-line.warn{color:var(--amber)}
+.log-line.error{color:var(--coral)}
+.log-line.section{color:var(--teal)}
+.log-line.ai{color:var(--blue)}
+
+.results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.result-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:1rem}
+.rs-val{font-size:24px;font-weight:500;line-height:1;margin-bottom:4px}
+.rs-label{font-size:11px;color:var(--text2)}
+.rs-sub{font-size:10px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px}
+
+.gene-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1.5rem}
+.gene-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:400}
+.gene-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.gene-table tr:hover td{background:var(--bg3)}
+.gene-mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--text)}
+.delta-pos{color:var(--coral);font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.delta-neg{color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.cat-pill{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:500;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em}
+.cp-immune{background:rgba(192,57,43,.15);color:#e74c3c}
+.cp-epi{background:rgba(125,60,152,.15);color:#9b59b6}
+.cp-stress{background:rgba(211,84,0,.15);color:#e67e22}
+.cp-neuro{background:rgba(26,82,118,.15);color:#5b9cf6}
+.cp-dna{background:rgba(17,122,101,.15);color:#3de8b0}
+.cp-meta{background:rgba(183,119,13,.15);color:#f0b429}
+.cp-circ{background:rgba(31,97,141,.15);color:#3498db}
+
+.config-row{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border)}
+.config-row:last-child{border-bottom:none}
+.config-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.config-desc{font-size:12px;color:var(--text2);max-width:360px;line-height:1.6}
+.toggle-switch{width:40px;height:22px;background:var(--bg4);border:1px solid var(--border2);border-radius:11px;cursor:pointer;position:relative;transition:background .2s}
+.toggle-switch.on{background:var(--accent);border-color:var(--accent)}
+.toggle-knob{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .2s}
+.toggle-switch.on .toggle-knob{transform:translateX(18px)}
+
+.report-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+.report-tab{font-size:13px;padding:8px 16px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;transition:all .15s}
+.report-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.report-tab-panel{display:none}
+.report-tab-panel.on{display:block}
+
+/* Score gauge */
+.score-ring-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.score-ring-wrap svg{position:absolute;inset:0}
+.score-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-num{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;line-height:1}
+.score-denom{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* Domain score bars */
+.domain-bars{display:flex;flex-direction:column;gap:8px;flex:1}
+.dbar-row{display:flex;align-items:center;gap:10px}
+.dbar-label{font-size:11px;color:var(--text2);min-width:120px}
+.dbar-track{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.dbar-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.dbar-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);min-width:28px;text-align:right}
+
+/* Interaction map */
+#map-canvas{background:var(--bg3);border-radius:var(--r2);cursor:grab;display:block;width:100%}
+#map-canvas:active{cursor:grabbing}
+.map-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--text2)}
+.map-legend-item{display:flex;align-items:center;gap:6px}
+.ml-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Queue */
+.queue-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px}
+.qi-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.qi-name{font-size:13px;color:var(--text);flex:1}
+.qi-meta{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.qi-action{font-size:11px;color:var(--text2);cursor:pointer;background:none;border:none}
+.qi-action:hover{color:var(--accent)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r3);padding:2rem;width:480px;max-width:90vw}
+.modal-title{font-family:'Instrument Serif',serif;font-size:20px;color:var(--text);margin-bottom:.5rem}
+.modal-sub{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:1.25rem}
+.api-info-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1rem;font-size:12px;color:var(--text2);line-height:1.7}
+.api-info-box code{color:var(--accent);font-family:'DM Mono',monospace;background:rgba(200,240,96,.08);padding:1px 4px;border-radius:3px}
+
+/* Patient report light theme */
+.pr-wrap{background:#fff;border-radius:14px;overflow:hidden;border:1px solid rgba(0,0,0,.08)}
+.pr-hero{background:#f7f9f7;padding:2rem 2rem 1.5rem;border-bottom:1px solid rgba(0,0,0,.06);text-align:center}
+.pr-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b8f6b;margin-bottom:.4rem;font-family:'DM Mono',monospace}
+.pr-headline{font-family:'Instrument Serif',serif;font-size:22px;color:#1a1a1a;line-height:1.3;margin-bottom:.6rem}
+.pr-sub{font-size:13px;color:#6b7280;line-height:1.7;max-width:440px;margin:0 auto}
+.pr-section{padding:1.25rem 1.5rem;border-bottom:1px solid rgba(0,0,0,.05)}
+.pr-section:last-child{border-bottom:none}
+.pr-section-eye{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:.4rem;font-family:'DM Mono',monospace}
+.pr-section-title{font-size:15px;font-weight:500;color:#111;margin-bottom:.6rem}
+.pr-text{font-size:13px;color:#374151;line-height:1.8}
+.pr-footer{background:#f9fafb;padding:1rem 1.5rem;text-align:center;border-top:1px solid rgba(0,0,0,.06)}
+.pr-footer-text{font-size:11px;color:#9ca3af;line-height:1.7}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease forwards}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite}
+.divider{height:1px;background:var(--border);margin:1.5rem 0}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.text-accent{color:var(--accent)}
+.text-teal{color:var(--teal)}
+.text-coral{color:var(--coral)}
+.text-amber{color:var(--amber)}
+.mono{font-family:'DM Mono',monospace}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+@media(max-width:768px){.app{grid-template-columns:1fr}.sidebar{display:none}.view{padding:1.5rem}.form-grid{grid-template-columns:1fr}.results-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <span class="logo-mark">XELGEN</span>
+    <span class="logo-sub">Cell Intelligence Platform</span>
+  </div>
+  <div class="topbar-right">
+    <button class="api-key-btn" id="api-key-btn" onclick="showApiModal()">⚙ API Key</button>
+    <div class="status-pill">
+      <div class="status-dot active" id="status-dot"></div>
+      <span id="status-text">Platform ready</span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="nav-item active" onclick="showView('upload')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M8 2v8M5 5l3-3 3 3M3 12h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Upload data
+      </div>
+      <div class="nav-item" onclick="showView('configure')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Configure
+      </div>
+      <div class="nav-item" onclick="showView('process')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Run analysis
+        <span class="nav-badge" id="badge-process">—</span>
+      </div>
+      <div class="nav-item" onclick="showView('results')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="2" y="10" width="3" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="6.5" y="6" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="11" y="2" width="3" height="12" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+        Results
+        <span class="nav-badge" id="badge-results">—</span>
+      </div>
+      <div class="nav-item" onclick="showView('report')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Patient report
+      </div>
+      <div class="nav-item" onclick="showView('queue')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Patient queue
+        <span class="nav-badge" id="badge-queue">0</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Pipeline stages</div>
+      <div class="pipeline-steps">
+        <div class="step-item" id="step-1"><div class="step-num">1</div><div><div class="step-name">Upload data</div><div class="step-desc">CSV/XLSX — Before/After</div></div></div>
+        <div class="step-item" id="step-2"><div class="step-num">2</div><div><div class="step-name">Patient profile</div><div class="step-desc">Name, age, protocol</div></div></div>
+        <div class="step-item" id="step-3"><div class="step-num">3</div><div><div class="step-name">Configure modules</div><div class="step-desc">Select analyses</div></div></div>
+        <div class="step-item" id="step-4"><div class="step-num">4</div><div><div class="step-name">Run analysis</div><div class="step-desc">Regenecode™ analysis</div></div></div>
+        <div class="step-item" id="step-5"><div class="step-num">5</div><div><div class="step-name">Review results</div><div class="step-desc">Scores + pathways</div></div></div>
+        <div class="step-item" id="step-6"><div class="step-num">6</div><div><div class="step-name">Generate report</div><div class="step-desc">Patient HTML</div></div></div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- VIEW: UPLOAD -->
+    <div class="view active" id="view-upload">
+
+      <!-- ─── INSPIRATION HERO ─── -->
+      <div style="background:linear-gradient(135deg,#0f0f0f 0%,#141a0e 60%,#0a1408 100%);border:1px solid rgba(200,240,96,0.1);border-radius:var(--r3);padding:2.5rem 2rem 2rem;margin-bottom:2rem;position:relative;overflow:hidden">
+        <!-- Background glow -->
+        <div style="position:absolute;top:-60px;right:-60px;width:260px;height:260px;background:radial-gradient(circle,rgba(200,240,96,0.07) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:-40px;left:30%;width:180px;height:180px;background:radial-gradient(circle,rgba(61,232,176,0.05) 0%,transparent 70%);pointer-events:none"></div>
+        <!-- Badge -->
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(200,240,96,0.08);border:1px solid rgba(200,240,96,0.18);border-radius:20px;padding:4px 12px;margin-bottom:1.25rem">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite"></div>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)">Regenecode™ · MSA 270K · v2.0</span>
+        </div>
+        <!-- Headline -->
+        <h1 style="font-family:'Instrument Serif',serif;font-size:clamp(26px,4vw,42px);font-weight:400;line-height:1.15;color:var(--text);margin-bottom:.75rem;max-width:580px">
+          Welcome to XELGEN<br>
+          <em style="font-style:italic;color:var(--accent)">Cell Intelligence Platform</em><br>
+          <span style="font-size:clamp(18px,2.5vw,26px);color:var(--text2);font-style:normal">V2.0</span>
+        </h1>
+        <!-- Subline -->
+        <p style="font-size:13px;color:var(--text2);line-height:1.8;max-width:520px;margin-bottom:1.5rem">269,094 methylation markers · 7 core biological systems · XELGEN Scoring System v1.0 · Regenecode AI narrative · Interactive interaction map. Upload a patient file below to begin.</p>
+        <!-- Stat row -->
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div style="display:flex;align-items:baseline;gap:5px"><span style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--accent)">269,094</span><span style="font-size:11px;color:var(--text3)">markers measured</span></div>
+          <div style="width:1px;background:var(--border)"></div>
+          <div style="display:flex;align-items:baseline;gap:5px"><span style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--teal)">7–15</span><span style="font-size:11px;color:var(--text3)">biological systems</span></div>
+          <div style="width:1px;background:var(--border)"></div>
+          <div style="display:flex;align-items:baseline;gap:5px"><span style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--amber)">762×</span><span style="font-size:11px;color:var(--text3)">more than Horvath clock</span></div>
+          <div style="width:1px;background:var(--border)"></div>
+          <div style="display:flex;align-items:baseline;gap:5px"><span style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--blue)">AI</span><span style="font-size:11px;color:var(--text3)">Regenecode AI narrative</span></div>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-eyebrow">Step 1 · Data ingestion</div>
+        <div class="page-title" style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:500">Upload patient methylation data</div>
+        <div class="page-sub">Upload the patient's Illumina MSA output as CSV or XLSX with CpG_ID/CpG_site, BEFORE, and AFTER columns. One file per patient.</div>
+      </div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+        <div class="upload-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 4v12M7 9l5-5 5 5M4 19h16" stroke="#8a887f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="upload-title">Drop file here or click to browse</div>
+        <div class="upload-sub">Illumina MSA 270K · CpG_ID | BEFORE | AFTER columns required</div>
+        <div class="upload-meta">XLSX · CSV · Max 100MB · 269,094 rows expected</div>
+      </div>
+      <div class="file-loaded" id="file-loaded">
+        <div class="file-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" stroke="#000" stroke-width="1.5"/><path d="M8 10h8M8 14h5" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div><div class="file-name" id="file-name-display">—</div><div class="file-meta" id="file-meta-display">—</div></div>
+        <button class="file-remove" onclick="clearFile()">Remove</button>
+      </div>
+      <div class="divider"></div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:1rem">Patient profile</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Patient name</label><input type="text" id="pt-name" placeholder="e.g. Nagisa"></div>
+          <div class="form-group"><label>Patient ID</label><input type="text" id="pt-id" placeholder="e.g. XG-2025-001"></div>
+          <div class="form-group"><label>Chronological age</label><input type="number" id="pt-age" placeholder="e.g. 42"></div>
+          <div class="form-group"><label>Biological sex</label><select id="pt-sex"><option value="female">Female</option><option value="male">Male</option><option value="other">Other / not specified</option></select></div>
+          <div class="form-group"><label>Biological age <span style="font-size:9px;color:var(--accent);margin-left:4px;text-transform:none;letter-spacing:0">from methylation clock / lab</span></label><input type="number" id="pt-bio-age" placeholder="e.g. 38.5" step="0.1" min="0" max="120"></div>
+          <div class="form-group"><label>Aging acceleration factor (AAF) <span style="font-size:9px;color:var(--text3);margin-left:4px;text-transform:none;letter-spacing:0">optional · 1.0 = neutral</span></label><input type="number" id="pt-aaf" placeholder="e.g. 0.92" step="0.01" min="0" max="3"></div>
+          <div class="form-group"><label>Treatment protocol</label><select id="pt-protocol"><option value="exosome_single">Exosome therapy — single dose</option><option value="exosome_monthly">Exosome therapy — monthly protocol</option><option value="stem_cell">Stem cell therapy</option><option value="exosome_lifestyle">Exosome + lifestyle protocol</option><option value="lifestyle_only">Lifestyle protocol only</option><option value="custom">Custom / other</option></select></div>
+          <div class="form-group"><label>Clinician</label><input type="text" id="pt-clinician" placeholder="e.g. Dr Smith"></div>
+          <div class="form-group full"><label>Clinical notes (optional)</label><textarea id="pt-notes" placeholder="Any relevant medical history, medications, or clinical context..."></textarea></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="proceedToConfigure()">
+          Continue to pipeline configuration
+          <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn btn-secondary" onclick="loadDemo()">Load demo patient</button>
+      </div>
+    </div>
+
+    <!-- VIEW: CONFIGURE -->
+    <div class="view" id="view-configure">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 3 · Pipeline configuration</div>
+        <div class="page-title">Configure analysis modules</div>
+        <div class="page-sub">Select which analyses Claude will run. Each module adds depth to the report. Uncheck to skip for faster processing.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:1rem">Analysis modules</div>
+        <div class="config-row"><div><div class="config-label">Delta-beta calculation & filtering</div><div class="config-desc">Compute Δβ = After − Before for all 269,094 sites. Filter to |Δβ| > 0.2 threshold. Classify hypo/hyper.</div></div><div class="config-control"><div class="toggle-switch on" id="mod-delta" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div></div></div>
+        <div class="config-row"><div><div class="config-label">Probe annotation to genes</div><div class="config-desc">Map significant CpG sites to gene names, genomic regions, and 7 core biological systems using embedded MSA manifest.</div></div><div class="config-control"><div class="toggle-switch on" id="mod-annot" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div></div></div>
+        <div class="config-row"><div><div class="config-label">Biological interaction map</div><div class="config-desc">Generate interactive 7-system network. Score all 42 directed cross-system stress pathways. Tier classification (T1/T2/T3).</div></div><div class="config-control"><div class="toggle-switch on" id="mod-map" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div></div></div>
+        <div class="config-row"><div><div class="config-label">XELGEN Scoring System v1.0</div><div class="config-desc">Compute Longevity Score™, BAAS, APS, SIS, TESS per system, and all 6 domain composite scores (CVR, MSS, IRS, NRS, OSR, RCS).</div></div><div class="config-control"><div class="toggle-switch on" id="mod-scores" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div></div></div>
+        <div class="config-row"><div><div class="config-label">AI narrative generation</div><div class="config-desc">Send results to Claude API for personalised clinical narrative, patient-facing plain-language summary, and watchlist generation.</div></div><div class="config-control"><div class="toggle-switch on" id="mod-ai" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div></div></div>
+        <div class="config-row"><div><div class="config-label">Patient Health Story report</div><div class="config-desc">Compile all outputs into a complete patient-facing HTML report. Dark XELGEN theme. Ready to deliver directly to patients.</div></div><div class="config-control"><div class="toggle-switch on" id="mod-report" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:.5rem">Specialist system panels</div>
+        <div class="card-sub" style="margin-bottom:1rem">Select which specialist panels to include beyond the 7 core systems</div>
+        <div class="protocol-grid">
+          <div class="proto-toggle" onclick="toggleProto(this)"><div class="proto-check"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><span class="proto-label">Nutritional Epigenomics</span></div>
+          <div class="proto-toggle" onclick="toggleProto(this)"><div class="proto-check"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><span class="proto-label">Hair Follicle &amp; AGA</span></div>
+          <div class="proto-toggle" onclick="toggleProto(this)"><div class="proto-check"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><span class="proto-label">Joint &amp; Cartilage Health</span></div>
+          <div class="proto-toggle" onclick="toggleProto(this)"><div class="proto-check"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><span class="proto-label">Surgical Recovery &amp; Repair</span></div>
+          <div class="proto-toggle" onclick="toggleProto(this)"><div class="proto-check"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><span class="proto-label">Cardiovascular &amp; Endothelial</span></div>
+          <div class="proto-toggle" onclick="toggleProto(this)"><div class="proto-check"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><span class="proto-label">Sex Hormone &amp; Reproductive</span></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="showView('upload')">← Back</button>
+        <button class="btn btn-primary" onclick="showView('process'); startPipeline()">
+          Run pipeline
+          <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><path d="M5 3l8 5-8 5V3z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW: PROCESS -->
+    <div class="view" id="view-process">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 4 · Analysis in progress</div>
+        <div class="page-title">Running Cell Intelligence Pipeline</div>
+        <div class="page-sub">XELGEN Cell Intelligence Platform is analysing your methylation data across all modules. Stages complete automatically — no action required.</div>
+      </div>
+      <div class="pipeline-visual" id="pipeline-visual">
+        <div class="pipe-stage"><div class="pipe-circle" id="pc-1">Δβ</div><div class="pipe-label">Delta calc</div></div>
+        <div class="pipe-connector" id="con-1"></div>
+        <div class="pipe-stage"><div class="pipe-circle" id="pc-2">⬡</div><div class="pipe-label">Annotation</div></div>
+        <div class="pipe-connector" id="con-2"></div>
+        <div class="pipe-stage"><div class="pipe-circle" id="pc-3">◈</div><div class="pipe-label">Scoring</div></div>
+        <div class="pipe-connector" id="con-3"></div>
+        <div class="pipe-stage"><div class="pipe-circle" id="pc-4">⬡</div><div class="pipe-label">Regenecode AI</div></div>
+        <div class="pipe-connector" id="con-4"></div>
+        <div class="pipe-stage"><div class="pipe-circle" id="pc-5">⊕</div><div class="pipe-label">Interaction map</div></div>
+        <div class="pipe-connector" id="con-5"></div>
+        <div class="pipe-stage"><div class="pipe-circle" id="pc-6">✦</div><div class="pipe-label">Report</div></div>
+      </div>
+      <!-- Progress bar -->
+      <div style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text2)" id="progress-label">Waiting to start...</span>
+          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--accent)" id="progress-pct">0%</span>
+        </div>
+        <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
+          <div id="progress-bar" style="height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width .5s ease"></div>
+        </div>
+      </div>
+      <div class="process-log" id="process-log">
+        <div class="log-line">Waiting to start pipeline...</div>
+      </div>
+      <div class="btn-row" id="process-actions" style="display:none">
+        <button class="btn btn-primary" onclick="showView('results')">View results →</button>
+        <button class="btn btn-secondary" onclick="resetPipeline()">Run another patient</button>
+      </div>
+    </div>
+
+    <!-- VIEW: RESULTS -->
+    <div class="view" id="view-results">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 5 · Analysis results</div>
+        <div class="page-title">Cell Intelligence Results</div>
+        <div class="page-sub">All scores and findings for <span id="results-patient-name" class="text-accent">—</span></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="results-grid" id="results-stats"></div>
+
+      <!-- Longevity score + domain bars -->
+      <div class="card" id="score-card" style="display:none">
+        <div class="section-title">XELGEN Longevity Score™</div>
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+          <div class="score-ring-wrap">
+            <svg viewBox="0 0 120 120" width="120" height="120">
+              <circle cx="60" cy="60" r="48" fill="none" stroke="#1c1c1c" stroke-width="10"/>
+              <circle cx="60" cy="60" r="48" fill="none" stroke="#c8f060" stroke-width="10"
+                id="score-ring" stroke-dasharray="0 301.6" stroke-linecap="round" transform="rotate(-90 60 60)">
+                <animate attributeName="stroke-dasharray" id="score-anim" from="0 301.6" to="0 301.6" dur="1.2s" fill="freeze"/>
+              </circle>
+            </svg>
+            <div class="score-inner"><div class="score-num text-accent" id="score-num">—</div><div class="score-denom">/100</div></div>
+          </div>
+          <div class="domain-bars" id="domain-bars"></div>
+        </div>
+      </div>
+
+      <!-- Interaction map -->
+      <div class="card" id="map-card" style="display:none">
+        <div class="section-title">Biological interaction map</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Hover nodes to highlight connections · Scroll to zoom · Drag to pan · Node size ∝ active sites · T1/T2/T3 = stress tier</p>
+        <canvas id="map-canvas" width="780" height="440"></canvas>
+        <div class="map-legend">
+          <div class="map-legend-item"><div class="ml-dot" style="background:#e74c3c"></div>High stress pathway</div>
+          <div class="map-legend-item"><div class="ml-dot" style="background:#f0b429"></div>Moderate pathway</div>
+          <div class="map-legend-item"><div class="ml-dot" style="background:#c8f060"></div>Low pathway</div>
+          <div class="map-legend-item"><div class="ml-dot" style="background:#3de8b0"></div>Tier 1 primary driver</div>
+        </div>
+      </div>
+
+      <!-- Top genes table -->
+      <div id="genes-section" style="display:none">
+        <div class="section-title">Top significant CpG sites</div>
+        <table class="gene-table">
+          <thead><tr><th>CpG ID</th><th>Gene</th><th>System</th><th>Before</th><th>After</th><th>Δβ</th></tr></thead>
+          <tbody id="genes-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="showView('report')">Generate patient report →</button>
+        <button class="btn btn-secondary" onclick="downloadJSON()">↓ Export JSON</button>
+      </div>
+    </div>
+
+    <!-- VIEW: REPORT -->
+    <div class="view" id="view-report">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 6 · Patient report</div>
+        <div class="page-title">Cell Intelligence Report</div>
+        <div class="page-sub">The complete patient-facing report. Review below, then download to deliver.</div>
+      </div>
+      <div class="btn-row" style="margin-bottom:1rem">
+        <button class="btn btn-primary" onclick="downloadReport()">↓ Download patient HTML report</button>
+        <button class="btn btn-secondary" onclick="window.open('','_reportPreview').document.write(document.getElementById('pr-content').innerHTML)">Open in new tab</button>
+      </div>
+      <div id="pr-content"></div>
+    </div>
+
+    <!-- VIEW: QUEUE -->
+    <div class="view" id="view-queue">
+      <div class="page-header">
+        <div class="page-eyebrow">Patient queue</div>
+        <div class="page-title">Processed patients</div>
+        <div class="page-sub">All patients processed in this session. Click to reload a patient's results.</div>
+      </div>
+      <div id="queue-list"><div style="color:var(--text3);font-size:13px">No patients processed yet. Upload data to begin.</div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal">
+    <div class="modal-title">Connect API Key</div>
+    <div class="modal-sub">Enter your Anthropic API key to enable AI-powered narrative generation. Your key is stored only in this browser session.</div>
+    <div class="api-info-box">
+      <strong style="color:var(--text)">How to get your API key:</strong><br>
+      1. Go to <code>console.anthropic.com</code><br>
+      2. Create an account or sign in<br>
+      3. Navigate to <code>API Keys</code> in the sidebar<br>
+      4. Click <code>Create Key</code> — copy and paste below<br><br>
+      <strong style="color:var(--text)">Usage cost:</strong> Each patient analysis uses approximately $0.02–0.08 in API credits (Claude Sonnet). At scale, use batch API for 50% discount.
+    </div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label>Anthropic API key</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveApiKey()">Save & connect</button>
+      <button class="btn btn-ghost" onclick="testApiKey()" style="color:var(--teal)">Test key ↗</button>
+      <button class="btn btn-ghost" onclick="closeApiModal()">Cancel</button>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost" onclick="clearApiKey()" style="color:var(--coral)">Clear</button>
+    </div>
+    <div id="api-test-result" style="font-size:11px;font-family:'DM Mono',monospace;min-height:18px;margin-top:6px;padding:0 2px"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// XELGEN CELL INTELLIGENCE PLATFORM
+// ═══════════════════════════════════════════════════════════════════
+
+let state = {
+  apiKey:      sessionStorage.getItem('xelgen_api_key')      || '',
+  netlifyUrl:  sessionStorage.getItem('xelgen_netlify_url')  || '',
+  rawData: null, fileName: '', rowCount: 0,
+  sigSites: [], sysData: {}, tiers: {}, scores: {},
+  patientName: '', patientId: '', patientAge: 42,
+  narrative: '', queue: []
+};
+
+const SYS_META = {
+  immune:     {label:'Immune & Inflammation',   icon:'🔥', color:'#C0392B', short:'IMM'},
+  epigenetic: {label:'Epigenetic Regulation',   icon:'🔧', color:'#7D3C98', short:'EPI'},
+  stress:     {label:'Stress / HPA',            icon:'⚡', color:'#D35400', short:'HPA'},
+  neuro:      {label:'Neurodevelopment',         icon:'🧠', color:'#1A5276', short:'NEU'},
+  dna:        {label:'DNA Repair',               icon:'🛡️', color:'#117A65', short:'DNA'},
+  metabolism: {label:'Metabolism',               icon:'⚙️', color:'#B7770D', short:'MET'},
+  circadian:  {label:'Circadian & Ageing',       icon:'🌙', color:'#1F618D', short:'CIR'},
+};
+
+const PROBE_MAP = {
+  'cg00459550':['TNF','TSS1500','immune'],     'cg03967540':['IL6','Body','immune'],
+  'cg00079660':['IL6','TSS200','immune'],      'cg07521232':['IFNG','TSS200','immune'],
+  'cg22328857':['IL2','TSS200','immune'],      'cg04083812':['IL1B','TSS1500','immune'],
+  'cg04901949':['CXCL8','TSS200','immune'],    'cg00900649':['TLR4','TSS200','immune'],
+  'cg02258537':['TLR2','Body','immune'],       'cg23914197':['NFKB1','TSS200','immune'],
+  'cg02416703':['CCL2','TSS1500','immune'],    'cg25195424':['STAT3','TSS200','immune'],
+  'cg22131547':['IRF4','TSS1500','immune'],    'cg03580331':['PTGS2','TSS200','immune'],
+  'cg18499068':['NLRP3','TSS1500','immune'],   'cg13175786':['CASP1','TSS200','immune'],
+  'cg27324066':['CD68','TSS200','immune'],     'cg26361121':['CD14','TSS1500','immune'],
+  'cg12155848':['DNMT3A','TSS200','epigenetic'],'cg13671556':['DNMT3B','TSS200','epigenetic'],
+  'cg11367668':['DNMT1','TSS1500','epigenetic'],'cg11545560':['TET1','TSS200','epigenetic'],
+  'cg11660874':['TET2','Body','epigenetic'],   'cg15665345':['TET3','TSS200','epigenetic'],
+  'cg09383557':['HDAC1','TSS200','epigenetic'],'cg09064673':['HDAC2','Body','epigenetic'],
+  'cg08819785':['HDAC3','TSS200','epigenetic'],'cg14861097':['EZH2','TSS1500','epigenetic'],
+  'cg09349559':['KDM5C','TSS200','epigenetic'],'cg07677920':['KDM1A','TSS200','epigenetic'],
+  'cg17721355':['NR3C1','TSS200','stress'],    'cg23803576':['NR3C1','Body','stress'],
+  'cg21772442':['FKBP5','TSS200','stress'],    'cg21934086':['FKBP5','Intron7','stress'],
+  'cg13692739':['CRH','TSS1500','stress'],     'cg02642298':['POMC','TSS200','stress'],
+  'cg00720341':['AVPR1B','Body','stress'],     'cg03652482':['SLC6A4','Promoter','stress'],
+  'cg05446580':['HSD11B2','TSS200','stress'],  'cg16154792':['NR3C2','TSS1500','stress'],
+  'cg25462389':['MAOA','TSS200','stress'],     'cg20878570':['TPH1','Body','stress'],
+  'cg13737640':['BDNF','Exon_I','neuro'],      'cg10758521':['BDNF','Exon_IV','neuro'],
+  'cg10409618':['NTRK2','TSS200','neuro'],     'cg00523683':['OXTR','TSS200','neuro'],
+  'cg20320866':['DRD2','TSS1500','neuro'],     'cg08577341':['HTR1A','TSS1500','neuro'],
+  'cg01512840':['COMT','TSS200','neuro'],      'cg08088927':['RELN','TSS1500','neuro'],
+  'cg24955283':['GAD1','TSS200','neuro'],      'cg26013951':['GAD2','TSS1500','neuro'],
+  'cg11528215':['SHANK3','Body','neuro'],      'cg16957509':['MECP2','TSS200','neuro'],
+  'cg23713795':['GRIN2B','TSS200','neuro'],    'cg03594078':['SYN1','TSS200','neuro'],
+  'cg13603450':['TP53','TSS200','dna'],        'cg12033075':['CDKN2A','TSS200','dna'],
+  'cg06413426':['BRCA1','TSS200','dna'],       'cg06821992':['ATM','Body','dna'],
+  'cg13959954':['PTEN','TSS1500','dna'],       'cg19720302':['RB1','TSS200','dna'],
+  'cg11341144':['MLH1','TSS200','dna'],        'cg24746726':['CDKN2B','TSS200','dna'],
+  'cg21106446':['MDM2','TSS200','dna'],        'cg11799593':['CHEK2','Body','dna'],
+  'cg23737809':['LEP','TSS200','metabolism'],  'cg09377797':['LEPR','Body','metabolism'],
+  'cg17561792':['ADIPOQ','TSS1500','metabolism'],'cg00206573':['IGF2','DMR','metabolism'],
+  'cg03605162':['H19','ICR','metabolism'],     'cg13772735':['PPARG','TSS200','metabolism'],
+  'cg11639615':['PPARGC1A','TSS1500','metabolism'],'cg25285135':['TFAM','TSS200','metabolism'],
+  'cg07896234':['SIRT1','TSS200','metabolism'],'cg14533567':['G6PC','TSS1500','metabolism'],
+  'cg04185197':['KCNQ1OT1','ICR','metabolism'],'cg15189233':['SNRPN','DMR','metabolism'],
+  'cg09364942':['CLOCK','Body','circadian'],   'cg27827702':['ARNTL','TSS200','circadian'],
+  'cg27829015':['PER1','TSS200','circadian'],  'cg24896501':['PER2','TSS1500','circadian'],
+  'cg12512345':['CRY1','Body','circadian'],    'cg06259013':['TERT','TSS200','circadian'],
+  'cg14568497':['SIRT3','TSS200','circadian'], 'cg14940659':['SIRT6','Body','circadian'],
+  'cg07497241':['KLOTHO','TSS200','circadian'],'cg01575193':['FOXO3','TSS200','circadian'],
+  'cg27892652':['RASSF1','TSS200','circadian'],'cg11146935':['SURVIVIN','TSS200','circadian']
+};
+
+const MATRIX = [
+  [0,3,3,3,2,2,2],[3,0,2,3,3,2,2],[3,3,0,3,2,3,2],
+  [1,1,2,0,1,2,2],[2,2,1,1,0,2,3],[2,2,2,2,1,0,3],[3,1,2,2,2,3,0]
+];
+const SYS_IDS = Object.keys(SYS_META);
+
+// ── Navigation ────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  const items = document.querySelectorAll('.nav-item');
+  items.forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(id))n.classList.add('active')});
+}
+
+// ── API key management ────────────────────────────────────────────
+function showApiModal(){
+  document.getElementById('api-modal').classList.add('show');
+  document.getElementById('api-key-input').value=state.apiKey||'';
+}
+function closeApiModal(){document.getElementById('api-modal').classList.remove('show')}
+function saveApiKey(){
+  const k=document.getElementById('api-key-input').value.trim();
+  if(k){
+    state.apiKey=k;
+    sessionStorage.setItem('xelgen_api_key',k);
+    document.getElementById('api-key-btn').textContent='API Key ✓';
+    document.getElementById('api-key-btn').classList.add('configured');
+  }
+  closeApiModal();
+}
+function clearApiKey(){state.apiKey='';sessionStorage.removeItem('xelgen_api_key');document.getElementById('api-key-btn').textContent='⚙ API Key';document.getElementById('api-key-btn').classList.remove('configured');closeApiModal()}
+
+async function testApiKey(){
+  const k=document.getElementById('api-key-input').value.trim();
+  const el=document.getElementById('api-test-result');
+  if(!k){el.style.color='var(--coral)';el.textContent='Enter your API key first';return;}
+  el.style.color='var(--text2)';el.textContent='Testing...';
+
+  // Save netlify URL if provided
+  if(nu){ state.netlifyUrl=nu; sessionStorage.setItem('xelgen_netlify_url',nu); }
+
+  const PROXY_URL = (nu||state.netlifyUrl||'').replace(/\/$/,'')+'/.netlify/functions/claude';
+  const HAS_PROXY = !!(nu||state.netlifyUrl);
+
+  const attempts = [];
+  if(HAS_PROXY) attempts.push({label:'Vercel proxy', fn: async()=>{
+    return fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:'Reply with just the word OK',apiKey:k})});
+  }});
+  attempts.push({label:'direct', fn: async()=>{
+    return fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'Hi'}]})});
+  }});
+
+  for(const a of attempts){
+    try{
+      el.textContent='Trying '+a.label+'...';
+      const resp=await Promise.race([a.fn(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))]);
+      if(resp.ok){
+        el.style.color='var(--accent)';
+        el.textContent='Connected via '+a.label+' — API key valid';
+        state.apiKey=k;
+        sessionStorage.setItem('xelgen_api_key',k);
+        document.getElementById('api-key-btn').textContent='API Key ✓';
+        document.getElementById('api-key-btn').classList.add('configured');
+        return;
+      } else {
+        const err=await resp.json().catch(()=>({error:{message:'HTTP '+resp.status}}));
+        el.style.color='var(--coral)';
+        el.textContent='Key error: '+(err.error?.message||'status '+resp.status);
+        return;
+      }
+    }catch(e){ el.textContent='Trying next...'; }
+  }
+  el.style.color='var(--coral)';
+  el.textContent='All failed. '+(!HAS_PROXY?'Enter your Netlify URL above and try again.':'Check your Netlify URL and internet connection.');
+}
+// netlifyUrl already in state from sessionStorage above
+// Pre-fill input if modal exists
+// netlifyUrl not used when hosted
+if(state.apiKey){document.getElementById('api-key-btn').textContent='⚙ API Key ✓';document.getElementById('api-key-btn').classList.add('configured')}
+
+// ── File handling ─────────────────────────────────────────────────
+function handleFileSelect(e){const f=e.target.files[0];if(f)loadFile(f)}
+function clearFile(){state.rawData=null;state.fileName='';document.getElementById('file-loaded').classList.remove('show');document.getElementById('upload-zone').style.display=''}
+function loadFile(file){
+  state.fileName=file.name;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      let rows=[];
+      if(file.name.endsWith('.csv')){
+        // Robust: handle both \r\n (Windows) and \n (Unix) line endings
+        const raw=ev.target.result.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+        const lines=raw.split('\n').filter(l=>l.trim().length>0);
+        if(lines.length<2){alert('CSV appears empty or has only a header row.');return;}
+        const header=lines[0].toLowerCase().split(',').map(h=>h.trim().replace(/"/g,''));
+        const ci={
+          id:header.findIndex(h=>h.includes('cpg')||h.includes('site')||h.includes('id')),
+          b:header.findIndex(h=>h.includes('before')||h==='b'),
+          a:header.findIndex(h=>h.includes('after')||h==='a')
+        };
+        // Auto-detect by position if header names not matched
+        if(ci.id<0)ci.id=0;
+        if(ci.b<0)ci.b=1;
+        if(ci.a<0)ci.a=2;
+        for(let i=1;i<lines.length;i++){
+          const parts=lines[i].split(',');
+          if(parts.length<3)continue;
+          const id=(parts[ci.id]||'').trim().replace(/"/g,'');
+          const bv=parseFloat(parts[ci.b]);
+          const av=parseFloat(parts[ci.a]);
+          if(id&&!isNaN(bv)&&!isNaN(av))rows.push({CpG_ID:id,BEFORE:bv,AFTER:av});
+        }
+      } else {
+        const wb=XLSX.read(ev.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+        rows=raw.map(r=>{
+          const keys=Object.keys(r);
+          const idKey=keys.find(k=>/(cpg|site|id)/i.test(k))||keys[0];
+          const bKey=keys.find(k=>/before/i.test(k))||keys[1];
+          const aKey=keys.find(k=>/after/i.test(k))||keys[2];
+          return{CpG_ID:String(r[idKey]||'').trim(),BEFORE:parseFloat(r[bKey]),AFTER:parseFloat(r[aKey])};
+        }).filter(r=>r.CpG_ID&&!isNaN(r.BEFORE)&&!isNaN(r.AFTER));
+      }
+      if(rows.length===0){
+        alert('No valid rows parsed. Check your file has CpG_ID, BEFORE, AFTER columns.');
+        return;
+      }
+      state.rawData=rows; state.rowCount=rows.length;
+      document.getElementById('file-loaded').classList.add('show');
+      document.getElementById('file-name-display').textContent=file.name;
+      document.getElementById('file-meta-display').textContent=rows.length.toLocaleString()+' probes loaded';
+      document.getElementById('upload-zone').style.display='none';
+      markStep(1,'done');markStep(2,'active-step');
+    }catch(err){
+      console.error('File parse error:',err);
+      alert('Could not parse file: '+err.message+'\n\nCheck the browser console for details.');
+    }
+  };
+  if(file.name.endsWith('.csv'))reader.readAsText(file,'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+// Drag-drop
+const uz=document.getElementById('upload-zone');
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag-over')});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag-over'));
+uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag-over');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0])});
+
+function proceedToConfigure(){
+  state.patientName=document.getElementById('pt-name').value||'Patient';
+  state.patientId=document.getElementById('pt-id').value||'XG-001';
+  state.patientAge=parseInt(document.getElementById('pt-age').value)||42;
+  state.patientBioAge=parseFloat(document.getElementById('pt-bio-age').value)||null;
+  state.patientAAF=parseFloat(document.getElementById('pt-aaf').value)||null;
+  markStep(2,'done');markStep(3,'active-step');
+  showView('configure');
+}
+
+function toggleSwitch(el){el.classList.toggle('on')}
+function toggleProto(el){el.classList.toggle('on');const inp=el.querySelector('input');if(inp)inp.checked=el.classList.contains('on');}
+
+// ── PIPELINE ──────────────────────────────────────────────────────
+function log(msg,type=''){
+  const div=document.createElement('div');
+  div.className='log-line'+(type?' '+type:'');
+  div.textContent='['+ new Date().toTimeString().slice(0,8)+'] '+msg;
+  const logEl=document.getElementById('process-log');
+  logEl.appendChild(div);logEl.scrollTop=logEl.scrollHeight;
+}
+function setPipeStage(n,status){
+  document.getElementById('pc-'+n).className='pipe-circle '+status;
+  if(n>1)document.getElementById('con-'+(n-1)).className='pipe-connector'+(status!=='error'?' done':'');
+}
+function setStatus(txt,active=true){
+  document.getElementById('status-text').textContent=txt;
+  document.getElementById('status-dot').className='status-dot'+(active?' active':'');
+}
+function markStep(n,cls){
+  const el=document.getElementById('step-'+n);
+  el.className='step-item '+cls;
+}
+
+async function startPipeline(){
+  // Capture Netlify URL from modal input before pipeline starts
+  // proxy not needed when hosted on https://
+
+  if(!state.rawData){log('No data loaded. Please upload a file first.','error');return}
+  try{
+  document.getElementById('process-log').innerHTML='';
+  document.getElementById('process-actions').style.display='none';
+  markStep(3,'done');markStep(4,'active-step');
+  setStatus('Pipeline running...');
+
+  log('XELGEN Cell Intelligence Pipeline v2.0','section');
+  log('Patient: '+state.patientName+' | '+state.rowCount.toLocaleString()+' probes loaded','info');
+
+  // STAGE 1: Delta calculation — chunked to keep UI responsive on 270K rows
+  setProgress(5,'Stage 1 — Delta-beta calculation across '+state.rawData.length.toLocaleString()+' sites...');
+  setPipeStage(1,'running');
+  log('--- Stage 1: Delta-beta calculation','section');
+  await new Promise(r=>setTimeout(r,30)); // yield to browser to render progress
+  const delta_threshold=0.2;
+  const sig=[];
+  const CHUNK=10000;
+  for(let i=0;i<state.rawData.length;i+=CHUNK){
+    const chunk=state.rawData.slice(i,i+CHUNK);
+    for(const r of chunk){r.Delta=r.AFTER-r.BEFORE;if(Math.abs(r.Delta)>delta_threshold)sig.push(r);}
+    const pct=5+Math.round((i/state.rawData.length)*12);
+    setProgress(pct,'Stage 1 — processing row '+(i+CHUNK<state.rawData.length?i+CHUNK:state.rawData.length).toLocaleString()+'...');
+    await new Promise(r=>setTimeout(r,0)); // yield UI thread every chunk
+  }
+  sig.sort((a,b)=>a.Delta-b.Delta);
+  const nHypo=sig.filter(r=>r.Delta<0).length;
+  const nHyper=sig.filter(r=>r.Delta>0).length;
+  state.sigSites=sig;
+  if(sig.length===0){
+    log('WARNING: 0 significant sites found. Check |Δβ| > 0.2 threshold and file column mapping.','warn');
+    log('First row of data: '+JSON.stringify(state.rawData[0]),'warn');
+  }
+  log('Found '+sig.length+' significant sites (|Δβ| > '+delta_threshold+')','success');
+  log('  Hypomethylated: '+nHypo+' | Hypermethylated: '+nHyper,'info');
+  document.getElementById('badge-process').textContent=sig.length;
+  setProgress(20,'Stage 1 complete — '+sig.length+' significant sites identified');
+  setPipeStage(1,'done');
+
+  // STAGE 2: Annotation
+  setProgress(22,'Stage 2 — Probe annotation & system mapping...');
+  setPipeStage(2,'running');
+  log('--- Stage 2: Probe annotation & system mapping','section');
+  await new Promise(r=>setTimeout(r,30));
+  const sysData={
+    immune:    {n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0},
+    epigenetic:{n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0},
+    stress:    {n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0},
+    neuro:     {n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0},
+    dna:       {n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0},
+    metabolism:{n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0},
+    circadian: {n_hypo:0,n_hyper:0,genes_hypo:[],genes_hyper:[],mean_delta:0,n_total:0}
+  };
+  let annotated=0;
+  // Build a fast lookup Set from PROBE_MAP keys for quick existence check
+  for(const site of sig){
+    const ann=PROBE_MAP[site.CpG_ID];
+    if(ann){
+      const[gene,region,sys]=ann;
+      site.Gene=gene;site.Region=region;site.System=sys;
+      const sd=sysData[sys];
+      sd.n_total++;
+      if(site.Delta<0){sd.n_hypo++;if(!sd.genes_hypo.includes(gene))sd.genes_hypo.push(gene);}
+      else{sd.n_hyper++;if(!sd.genes_hyper.includes(gene))sd.genes_hyper.push(gene);}
+      sd.mean_delta=((sd.mean_delta*(sd.n_total-1))+site.Delta)/sd.n_total;
+      annotated++;
+    }
+  }
+  state.sysData=sysData;
+  await new Promise(r=>setTimeout(r,0));
+  log('Annotated '+annotated+' sites across 7 biological systems','success');
+  if(annotated===0){
+    log('NOTE: 0 probe IDs matched our annotation library. Scoring will use statistical proxies.','warn');
+    log('This is normal — our embedded library covers ~120 key genes. All scoring still runs.','info');
+  }
+  Object.entries(sysData).forEach(([sid,sd])=>{
+    if(sd.n_total>0)log('  '+SYS_META[sid].short+': '+sd.n_hypo+' hypo / '+sd.n_hyper+' hyper','info');
+  });
+  setProgress(40,'Stage 2 complete — '+annotated+' probes annotated');
+  setPipeStage(2,'done');
+
+  // STAGE 3: Scoring
+  setProgress(42,'Stage 3 — XELGEN Scoring System v1.0...');
+  setPipeStage(3,'running');
+  log('--- Stage 3: XELGEN Scoring System v1.0','section');
+  await sleep(100);
+  const scores=computeScores(sysData,sig,nHypo,nHyper);
+  state.scores=scores;
+  const tiers=computeTiers(sysData);
+  state.tiers=tiers;
+  log(`XELGEN Longevity Score™: ${scores.ls}/100 — ${scoreBand(scores.ls).label}`,'success');
+  log(`  BAAS: ${scores.baas} | APS: ${scores.aps} | SIS: ${scores.sis}`,'info');
+  log(`  CVR: ${scores.domain.cvr} | MSS: ${scores.domain.mss} | IRS: ${scores.domain.irs}`,'info');
+  log(`  NRS: ${scores.domain.nrs} | OSR: ${scores.domain.osr} | RCS: ${scores.domain.rcs}`,'info');
+  log(`Tier 1 drivers: ${SYS_IDS.filter(s=>tiers[s]===1).join(', ')}`,'info');
+  setProgress(58,'Stage 3 complete — Longevity Score computed');
+  setPipeStage(3,'done');
+
+  // STAGE 4: Claude AI narrative
+  setProgress(60,'Stage 4 — Regenecode™ narrative generation...');
+  setPipeStage(4,'running');
+  log('--- Stage 4: Regenecode™ narrative generation','section');
+  if(document.getElementById('mod-ai').classList.contains('on')){
+    if(!state.apiKey){
+      log('No API key configured — skipping AI narrative','warn');
+      log('Click "API Key" in the header to add your Anthropic key','warn');
+      state.narrative='';
+    } else {
+      log('Sending data to Regenecode AI...','ai');
+      log('  Patient: '+state.patientName+' | Sites: '+sig.length,'info');
+      log('  Model: claude-sonnet-4-20250514 | max_tokens: 1500','info');
+      try{
+        const narrative=await callClaude(sig,sysData,scores,tiers);
+        state.narrative=narrative;
+        log('AI narrative received successfully','success');
+        log('  headline: '+(narrative.headline?narrative.headline.slice(0,60)+'...':'MISSING'),'info');
+        log('  summary: '+(narrative.summary?'present ('+narrative.summary.length+' chars)':'MISSING'),'info');
+        log('  map_narrative: '+(narrative.map_narrative?'present':'MISSING'),'info');
+        log('  system_narratives: '+(narrative.system_narratives?'present ('+Object.keys(narrative.system_narratives).length+' systems)':'MISSING'),'info');
+        log('  recommendations: '+(narrative.recommendations?narrative.recommendations.length+' items':'MISSING'),'info');
+        log('  watchlist: '+(narrative.watchlist?narrative.watchlist.length+' items':'MISSING'),'info');
+      }catch(err){
+        log('Regenecode AI error: '+err.message,'error');
+        log('  Check your API key is valid and has credits','warn');
+        log('  Falling back to template narrative','warn');
+        state.narrative='';
+      }
+    }
+  } else {
+    log('AI narrative module disabled — using template narrative','warn');
+    state.narrative='';
+  }
+  setProgress(78,'Stage 4 complete — narrative ready');
+  setPipeStage(4,'done');
+
+  // STAGE 5: Interaction map
+  setProgress(80,'Stage 5 — Building biological interaction map...');
+  setPipeStage(5,'running');
+  log('--- Stage 5: Building biological interaction map','section');
+  await sleep(100);
+  log('7 system hubs positioned | 42 directed pathways scored','success');
+  log(`High-risk pairs: ${countHighRisk()} identified`,'info');
+  setProgress(90,'Stage 5 complete — interaction map ready');
+  setPipeStage(5,'done');
+
+  // STAGE 6: Report
+  setProgress(92,'Stage 6 — Compiling patient report...');
+  setPipeStage(6,'running');
+  log('--- Stage 6: Compiling patient report','section');
+  await sleep(100);
+  buildResults();
+  buildReport();
+  log('Patient report generated successfully','success');
+  setPipeStage(6,'done');
+  markStep(4,'done');markStep(5,'active-step');
+
+  log('','');
+  setProgress(100,'Analysis complete — results ready');
+  log('Pipeline complete. Results ready.','success');
+  setStatus('Analysis complete',false);
+  document.getElementById('process-actions').style.display='flex';
+  document.getElementById('badge-results').textContent=sig.length;
+
+  // Add to queue
+  addToQueue(state.patientName,state.patientId,sig.length,scores.ls);
+  } catch(pipelineErr) {
+    log('PIPELINE ERROR: '+pipelineErr.message,'error');
+    log('Check browser console (F12) for full stack trace','warn');
+    console.error('Pipeline error:',pipelineErr);
+    setProgress(0,'Error — check log above');
+    setStatus('Error — see log',false);
+    document.getElementById('process-actions').style.display='flex';
+  }
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+function setProgress(pct, label){
+  document.getElementById('progress-bar').style.width=pct+'%';
+  document.getElementById('progress-pct').textContent=pct+'%';
+  if(label) document.getElementById('progress-label').textContent=label;
+}
+
+// ── Scoring engine ─────────────────────────────────────────────────
+function clamp(v,lo=0,hi=100){return Math.max(lo,Math.min(hi,v))}
+
+function computeScores(sysData,sig,nHypo,nHyper){
+  const nSig=sig.length;
+  const proxy_gap=(nSig-100)/50;
+  let baas,aps;
+  if(state.patientBioAge!=null){
+    const gap=state.patientBioAge-state.patientAge;
+    baas=Math.round(clamp(85-5*gap));
+  } else {
+    baas=Math.round(clamp(85-5*proxy_gap));
+  }
+  if(state.patientAAF!=null){
+    aps=Math.round(clamp(100-100*(state.patientAAF-0.80)));
+  } else {
+    const deltas=sig.map(s=>Math.abs(s.Delta||0));
+    const maxAbs=deltas.length>0?Math.max(...deltas):0.3; // guard empty array
+    const proxy_aaf=0.80+maxAbs*0.3;
+    aps=Math.round(clamp(100-100*(proxy_aaf-0.80)));
+  }
+
+  const sysZ={};const sysAbsZ={};
+  for(const sid of SYS_IDS){
+    const sd=sysData[sid];
+    const mz=(sd.mean_delta||0)/0.15;
+    sysZ[sid]=mz;
+    sysAbsZ[sid]=Math.abs(mz)+(sd.n_total/20);
+  }
+
+  const tess={};
+  for(const sid of SYS_IDS){
+    tess[sid]=Math.round(clamp(100-30*Math.abs(sysZ[sid])-10*Math.max(0,sysAbsZ[sid]-1)));
+  }
+
+  const zVals=SYS_IDS.map(s=>sysZ[s]);
+  const meanZ=zVals.reduce((a,b)=>a+b,0)/zVals.length;
+  const sdZ=Math.sqrt(zVals.reduce((a,b)=>a+(b-meanZ)**2,0)/Math.max(zVals.length-1,1));
+  const meanAbsZ=zVals.reduce((a,b)=>a+Math.abs(b),0)/zVals.length;
+  const sis=Math.round(clamp(100-18*sdZ-4*meanAbsZ));
+
+  function orgScore(sid){return Math.round(clamp(85-sysData[sid].n_total*0.35))}
+  const org={immune:orgScore('immune'),neuro:orgScore('neuro'),meta:orgScore('metabolism'),
+    circ:orgScore('circadian'),dna:orgScore('dna'),epi:orgScore('epigenetic')};
+  const meanOrg=Math.round(Object.values(org).reduce((a,b)=>a+b,0)/Object.values(org).length);
+  const meanTess=Math.round(Object.values(tess).reduce((a,b)=>a+b,0)/Object.values(tess).length);
+  const ls=Math.round(0.30*baas+0.15*aps+0.25*meanOrg+0.20*meanTess+0.10*sis);
+
+  const domain={
+    cvr:Math.round(0.55*org.immune+0.45*tess.immune),
+    mss:Math.round(0.55*org.meta+0.45*tess.metabolism),
+    irs:Math.round(0.50*org.immune+0.30*tess.immune+0.20*tess.epigenetic),
+    nrs:Math.round(0.60*org.neuro+0.40*tess.neuro),
+    osr:Math.round(0.40*org.dna+0.30*org.immune+0.30*tess.circadian),
+    rcs:Math.round(0.50*tess.circadian+0.25*tess.metabolism+0.25*Math.round(0.60*org.neuro+0.40*tess.neuro)),
+  };
+
+  return {ls,baas,aps,sis,meanOrg,meanTess,tess,org,domain,sysZ,dirLabels:Object.fromEntries(
+    SYS_IDS.map(s=>[s,dirLabel(sysZ[s])]))};
+}
+
+function computeTiers(sysData){
+  const outgoing=SYS_IDS.map((sid,i)=>({sid,out:MATRIX[i].reduce((a,b)=>a+b,0)}));
+  outgoing.sort((a,b)=>b.out-a.out);
+  const tiers={};
+  outgoing.forEach((o,i)=>{tiers[o.sid]=i<3?1:i<6?2:3});
+  return tiers;
+}
+
+function dirLabel(z){
+  if(z>=0.50)return'Restrained / Suppressed';
+  if(z>=0.15)return'Mild Restraint';
+  if(z>=-0.14)return'Stable / Neutral';
+  if(z>=-0.50)return'Mild Activation';
+  return'Compensatory Activation';
+}
+
+function scoreBand(s){
+  if(s>=85)return{label:'Exceptional resilience',color:'#3de8b0'};
+  if(s>=75)return{label:'Strong modifiability',color:'#c8f060'};
+  if(s>=65)return{label:'Moderate burden — good opportunity',color:'#f0b429'};
+  if(s>=50)return{label:'Elevated load — priority for intervention',color:'#ff8c42'};
+  return{label:'High strain — close monitoring',color:'#ff6b4a'};
+}
+
+function countHighRisk(){
+  let c=0;
+  for(let i=0;i<7;i++)for(let j=0;j<7;j++)if(MATRIX[i][j]===3)c++;
+  return c;
+}
+
+// ── Claude API call ────────────────────────────────────────────────
+async function callClaude(sig,sysData,scores,tiers){
+  const nSig=sig.length;
+  const nHypo=sig.filter(s=>s.Delta<0).length;
+  const nHyper=sig.filter(s=>s.Delta>0).length;
+  const t1=SYS_IDS.filter(s=>tiers[s]===1).map(s=>SYS_META[s].label).join(', ');
+  const t2=SYS_IDS.filter(s=>tiers[s]===2).map(s=>SYS_META[s].label).join(', ');
+  const t3=SYS_IDS.filter(s=>tiers[s]===3).map(s=>SYS_META[s].label).join(', ');
+  const activeSpec=[...document.querySelectorAll('.proto-toggle.on .proto-label')].map(el=>el.textContent.trim());
+  const sysLines=SYS_IDS.map(sid=>{
+    const sd=sysData[sid];
+    const gh=sd.genes_hypo.slice(0,5).join(', ')||'none';
+    const gp=sd.genes_hyper.slice(0,5).join(', ')||'none';
+    return sid.toUpperCase()+' ('+SYS_META[sid].label+'): '+sd.n_hypo+' activated ['+gh+'], '+sd.n_hyper+' silenced ['+gp+']. TESS='+scores.tess[sid]+'. Direction: '+scores.dirLabels[sid]+'. Tier: T'+tiers[sid];
+  }).join('\n');
+  const bioLine=state.patientBioAge!=null?'Bio Age: '+state.patientBioAge+' (gap '+(state.patientBioAge-state.patientAge).toFixed(1)+' yrs), AAF: '+(state.patientAAF||'n/a'):'Bio Age: not provided';
+  const specLine=activeSpec.length?'SPECIALIST PANELS: '+activeSpec.join(', '):'No specialist panels';
+
+  const prompt=`XELGEN clinical epigenetics report writer. Plain language, patient-facing. Be specific to THIS patient's data.
+
+PATIENT: ${state.patientName} | Age: ${state.patientAge} | ${bioLine}
+PROTOCOL: ${document.getElementById('pt-protocol').value}
+TOTAL SITES: ${nSig} (${nHypo} activated, ${nHyper} silenced)
+LONGEVITY SCORE: ${scores.ls}/100 — ${scoreBand(scores.ls).label}
+BAAS: ${scores.baas} | APS: ${scores.aps} | SIS: ${scores.sis}
+TIER 1 PRIMARY DRIVERS: ${t1}
+TIER 2 AMPLIFIERS: ${t2}
+TIER 3 RECEIVERS: ${t3}
+${specLine}
+
+SYSTEM DATA:
+${sysLines}
+
+Return ONLY valid JSON, no markdown:
+{
+  "headline": "one powerful plain-English sentence for this specific patient",
+  "summary": "3-4 sentences explaining the biology in plain language for the patient",
+  "map_narrative": "3-4 sentences explaining interaction map — drivers, amplifiers, receivers, what cascade means day-to-day",
+  "system_narratives": {"immune":"2 sentences","epigenetic":"2 sentences","stress":"2 sentences","neuro":"2 sentences","dna":"2 sentences","metabolism":"2 sentences","circadian":"2 sentences"},
+  "specialist_note": "${activeSpec.length ? '2 sentences on what specialist panels add' : ''}",
+  "positive": "2-3 sentences on genuinely encouraging signals in this data",
+  "watchlist": ["thing to monitor 1","thing 2","thing 3","thing 4","thing 5"],
+  "recommendations": ["specific action 1","action 2","action 3","action 4"],
+  "clinical_note": "one sentence for the treating physician",
+  "specialist_panels": {
+    ${activeSpec.map(panel => `"${panel}": {"overview":"2 sentences for this panel","findings":["finding 1","finding 2","finding 3"],"recommendations":["rec 1","rec 2","rec 3"],"highlight":"one sentence"}`).join(',')}
+  }
+}`;
+
+  // Use relative /api/claude first — works when Flask proxy is running on same server
+  const SAME_ORIGIN_PROXY = window.location.origin + '/api/claude';
+  const proxyBase = (state.netlifyUrl||sessionStorage.getItem('xelgen_netlify_url')||'').replace(/\/$/,'');
+  const CUSTOM_PROXY = proxyBase ? proxyBase + '/api/claude' : null;
+
+  log('  API key : ' + (state.apiKey?state.apiKey.slice(0,18)+'...':'NOT SET'), 'info');
+  log('  Server  : ' + SAME_ORIGIN_PROXY, 'info');
+
+  function parseNarr(data){
+    var text = (data.content||[]).map(function(b){ return b.text||''; }).join('');
+    var clean = text.replace(/```json|```/g,'').trim();
+    try{ return JSON.parse(clean); }catch(e){
+      var m = clean.match(/\{[\s\S]*\}/);
+      if(m){ try{ return JSON.parse(m[0]); }catch(e2){} }
+      throw new Error('Could not parse response');
+    }
+  }
+
+  async function tryFetch(url, opts, label){
+    log('  Trying ' + label + '...', 'info');
+    var resp = await Promise.race([
+      fetch(url, opts),
+      new Promise(function(_,r){ setTimeout(function(){ r(new Error('timeout')); }, 25000); })
+    ]);
+    if(!resp.ok){
+      var err = await resp.json().catch(function(){ return {error:{message:'HTTP '+resp.status}}; });
+      throw new Error((err.error && err.error.message) ? err.error.message : 'HTTP '+resp.status);
+    }
+    return resp.json();
+  }
+
+  var anthropicBody = JSON.stringify({
+    model:'claude-sonnet-4-20250514',
+    max_tokens:1500,
+    messages:[{role:'user',content:prompt}]
+  });
+  var anthropicHeaders = {
+    'Content-Type':'application/json',
+    'x-api-key':state.apiKey,
+    'anthropic-version':'2023-06-01',
+    'anthropic-dangerous-allow-browser':'true'
+  };
+  var proxyBody = JSON.stringify({prompt:prompt, apiKey:state.apiKey});
+  var proxyHeaders = {'Content-Type':'application/json'};
+
+  var lastErr = '';
+
+  // METHOD 1: Same-origin proxy (Flask server on Manus / any backend)
+  try{
+    var d1 = await tryFetch(SAME_ORIGIN_PROXY, {method:'POST',headers:proxyHeaders,body:proxyBody}, 'Same-origin proxy (/api/claude)');
+    log('  Same-origin proxy succeeded', 'success');
+    return parseNarr(d1);
+  }catch(e1){ lastErr=e1.message; log('  Same-origin proxy failed: '+e1.message,'warn'); }
+
+  // METHOD 2: Direct Anthropic
+  try{
+    var d2 = await tryFetch('https://api.anthropic.com/v1/messages',
+      {method:'POST',headers:anthropicHeaders,body:anthropicBody}, 'Direct Anthropic');
+    log('  Direct succeeded', 'success');
+    return parseNarr(d2);
+  }catch(e2){ lastErr=e2.message; log('  Direct failed: '+e2.message,'warn'); }
+
+  // METHOD 3: Custom proxy if configured
+  if(CUSTOM_PROXY){
+    try{
+      var d3 = await tryFetch(CUSTOM_PROXY, {method:'POST',headers:proxyHeaders,body:proxyBody}, 'Custom proxy');
+      log('  Custom proxy succeeded', 'success');
+      return parseNarr(d3);
+    }catch(e3){ lastErr=e3.message; log('  Custom proxy failed: '+e3.message,'warn'); }
+  }
+
+  // METHOD 4: corsproxy.io
+  try{
+    var d4 = await tryFetch(
+      'https://corsproxy.io/?url='+encodeURIComponent('https://api.anthropic.com/v1/messages'),
+      {method:'POST',headers:{'Content-Type':'application/json','x-api-key':state.apiKey,'anthropic-version':'2023-06-01'},
+       body:anthropicBody}, 'corsproxy.io');
+    log('  corsproxy.io succeeded', 'success');
+    return parseNarr(d4);
+  }catch(e4){ lastErr=e4.message; log('  corsproxy.io failed: '+e4.message,'warn'); }
+
+  throw new Error('All methods failed: '+lastErr);
+
+}
+
+// ── Build results view ────────────────────────────────────────────
+function buildResults(){
+  const {scores,sysData,tiers,sigSites,narrative}=state;
+  const sig=sigSites;
+  const nSig=sig.length;
+  const nHypo=sig.filter(s=>s.Delta<0).length;
+  const nHyper=sig.filter(s=>s.Delta>0).length;
+  const annotated=sig.filter(s=>s.Gene).length;
+
+  document.getElementById('results-patient-name').textContent=state.patientName;
+
+  // Stats grid
+  const band=scoreBand(scores.ls);
+  document.getElementById('results-stats').innerHTML=`
+    <div class="result-stat"><div class="rs-val" style="color:${band.color}">${scores.ls}</div><div class="rs-label">Longevity Score™</div><div class="rs-sub">${band.label}</div></div>
+    <div class="result-stat"><div class="rs-val text-accent">${nSig}</div><div class="rs-label">Significant sites</div><div class="rs-sub">|Δβ| > 0.2</div></div>
+    <div class="result-stat"><div class="rs-val" style="color:#5b9cf6">${nHypo}</div><div class="rs-label">Hypomethylated</div><div class="rs-sub">Activated ↓</div></div>
+    <div class="result-stat"><div class="rs-val text-coral">${nHyper}</div><div class="rs-label">Hypermethylated</div><div class="rs-sub">Silenced ↑</div></div>`;
+
+  // Score ring
+  const sc=document.getElementById('score-card');sc.style.display='block';
+  document.getElementById('score-num').textContent=scores.ls;
+  document.getElementById('score-ring').setAttribute('stroke','${band.color}');
+  const pct=(scores.ls/100)*301.6;
+  document.getElementById('score-ring').style.stroke=band.color;
+  document.getElementById('score-anim').setAttribute('to',`${pct} 301.6`);
+  document.getElementById('score-anim').beginElement&&document.getElementById('score-anim').beginElement();
+
+  // Domain bars
+  const domItems=[
+    {label:'Cardiovascular (CVR)',v:scores.domain.cvr},
+    {label:'Metabolic (MSS)',v:scores.domain.mss},
+    {label:'Immune Resilience (IRS)',v:scores.domain.irs},
+    {label:'Neuro / Cognitive (NRS)',v:scores.domain.nrs},
+    {label:'Oxidative Stress (OSR)',v:scores.domain.osr},
+    {label:'Recovery Capacity (RCS)',v:scores.domain.rcs},
+  ];
+  document.getElementById('domain-bars').innerHTML=domItems.map(d=>{
+    const col=d.v>=75?'#c8f060':d.v>=60?'#f0b429':'#ff6b4a';
+    return`<div class="dbar-row"><div class="dbar-label">${d.label}</div><div class="dbar-track"><div class="dbar-fill" style="width:${d.v}%;background:${col}"></div></div><div class="dbar-val">${d.v}</div></div>`;
+  }).join('');
+
+  // Interaction map
+  document.getElementById('map-card').style.display='block';
+  drawInteractionMap(sysData,tiers,sig.length);
+  initMapEvents();
+
+  // Top genes table
+  document.getElementById('genes-section').style.display='block';
+  const top=sig.filter(s=>s.Gene).slice(0,30);
+  document.getElementById('genes-tbody').innerHTML=top.map(s=>{
+    const col='cp-'+s.System;
+    const dv=s.Delta.toFixed(4);
+    const dc=s.Delta<0?'delta-neg':'delta-pos';
+    return`<tr><td class="gene-mono">${s.CpG_ID}</td><td class="gene-mono">${s.Gene||'—'}</td><td><span class="cat-pill ${col}">${SYS_META[s.System]?.short||s.System||'—'}</span></td><td class="gene-mono">${s.BEFORE.toFixed(4)}</td><td class="gene-mono">${s.AFTER.toFixed(4)}</td><td class="${dc}">${dv}</td></tr>`;
+  }).join('');
+
+  markStep(5,'done');markStep(6,'active-step');
+}
+
+// ── Interaction Map Canvas ─────────────────────────────────────────
+let mapScale=1,mapOffX=0,mapOffY=0,mapDrag=false,mapHov=-1;
+
+function drawInteractionMap(sysData,tiers,totalSig){
+  const canvas=document.getElementById('map-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const CX=W/2,CY=H/2,R=Math.min(W,H)*0.33;
+  const N=7;
+
+  function hubPos(i){const a=(i/N)*Math.PI*2-Math.PI/2;return[CX+Math.cos(a)*R,CY+Math.sin(a)*R]}
+  function nodeR(i){const sid=SYS_IDS[i];return 26+Math.min((sysData[sid]?.n_total||0)*1.5,22)}
+  function arrowCol(s){return s===3?'#C0392B':s===2?'#f0b429':'#c8f060'}
+
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(mapOffX,mapOffY);
+  ctx.scale(mapScale,mapScale);
+
+  ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=.5;ctx.stroke();
+
+  for(let i=0;i<N;i++){
+    for(let j=0;j<N;j++){
+      const s=MATRIX[i][j];if(!s)continue;
+      const[sx,sy]=hubPos(i),[tx,ty]=hubPos(j);
+      const dx=tx-sx,dy=ty-sy,dist=Math.sqrt(dx*dx+dy*dy);
+      const px=-dy/dist*5,py=dx/dist*5;
+      const nr=nodeR(j);
+      const ax=sx+px+(tx-sx)*nodeR(i)/dist,ay=sy+py+(ty-sy)*nodeR(i)/dist;
+      const ex=tx+px-(tx-sx)*nr/dist,ey=ty+py-(ty-sy)*nr/dist;
+      const isHov=mapHov===i||mapHov===j;
+      const alpha=mapHov<0?(s===3?.8:s===2?.5:.25):(isHov?.95:.08);
+      const col=arrowCol(s);
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ex,ey);
+      ctx.strokeStyle=col+(Math.round(alpha*255).toString(16).padStart(2,'0'));
+      ctx.lineWidth=s*1.0;ctx.stroke();
+      const ang=Math.atan2(ey-ay,ex-ax);const hs=6+s*2;
+      ctx.beginPath();ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-hs*Math.cos(ang-.45),ey-hs*Math.sin(ang-.45));
+      ctx.lineTo(ex-hs*Math.cos(ang+.45),ey-hs*Math.sin(ang+.45));
+      ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill();
+    }
+  }
+
+  for(let i=0;i<N;i++){
+    const[hx,hy]=hubPos(i);
+    const nr=nodeR(i);
+    const sid=SYS_IDS[i];
+    const col=SYS_META[sid].color;
+    const tier=tiers[sid]||2;
+    const isHov=mapHov===i;
+
+    if(tier===1){
+      ctx.beginPath();ctx.arc(hx,hy,nr+12,0,Math.PI*2);
+      ctx.strokeStyle='#3de8b030';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    ctx.beginPath();ctx.arc(hx,hy,isHov?nr+3:nr,0,Math.PI*2);
+    ctx.fillStyle=col+(isHov?'FF':'DD');ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1.2;ctx.stroke();
+
+    ctx.font=`${Math.floor(nr*0.52)}px serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='white';
+    ctx.fillText(SYS_META[sid].icon,hx,hy-3);
+    const tierC=['','#3de8b0','#f0b429','#5b9cf6'];
+    ctx.font='bold 9px DM Sans, sans-serif';
+    ctx.fillStyle=tierC[tier]||'#aaa';
+    ctx.fillText('T'+tier,hx,hy+nr*0.42);
+
+    const la=(i/N)*Math.PI*2-Math.PI/2;
+    const lx=hx+Math.cos(la)*(nr+20);
+    const ly=hy+Math.sin(la)*(nr+20);
+    ctx.font='bold 10px DM Sans, sans-serif';
+    ctx.fillStyle='#e8e6e0';ctx.textAlign='center';ctx.textBaseline='middle';
+    const parts=SYS_META[sid].label.split(' & ');
+    parts.forEach((p,pi)=>ctx.fillText(p,lx,ly+(pi-(parts.length-1)/2)*13));
+
+    const cnt=sysData[sid]?.n_total||0;
+    if(cnt>0){
+      ctx.font='bold 10px DM Mono, monospace';
+      ctx.fillStyle='#c8f060cc';
+      ctx.fillText(cnt,hx,hy+10);
+    }
+  }
+
+  ctx.font='bold 13px DM Sans, sans-serif';
+  ctx.fillStyle='#c8f060';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(state.patientName,CX,CY-8);
+  ctx.font='10px DM Mono, monospace';ctx.fillStyle='#4a4844';
+  ctx.fillText(totalSig+' sites',CX,CY+8);
+  ctx.restore();
+
+  // Re-attach events after redraw (stored in closure)
+  canvas._drawFn=()=>drawInteractionMap(sysData,tiers,totalSig);
+}
+
+// Map mouse events
+function initMapEvents(){
+  const mc=document.getElementById('map-canvas');
+  if(!mc)return;
+  mc.addEventListener('mousemove',e=>{
+    const c=document.getElementById('map-canvas');
+    if(!c)return;
+    const rect=c.getBoundingClientRect();
+    const scX=c.width/rect.width,scY=c.height/rect.height;
+    if(mapDrag){mapOffX+=(e.movementX||0)*scX;mapOffY+=(e.movementY||0)*scY;c._drawFn&&c._drawFn();return;}
+    const mx=(e.clientX-rect.left)*scX,my=(e.clientY-rect.top)*scY;
+    const wx=(mx-mapOffX)/mapScale,wy=(my-mapOffY)/mapScale;
+    const W=c.width,H=c.height,R=Math.min(W,H)*0.33,CX=W/2,CY=H/2,N=7;
+    let found=-1;
+    for(let i=0;i<N;i++){const a=(i/N)*Math.PI*2-Math.PI/2;const hx=CX+Math.cos(a)*R,hy=CY+Math.sin(a)*R;const nr=26+Math.min((state.sysData[SYS_IDS[i]]?.n_total||0)*1.5,22)+6;if((wx-hx)**2+(wy-hy)**2<nr*nr){found=i;break;}}
+    if(found!==mapHov){mapHov=found;c._drawFn&&c._drawFn();}
+    c.style.cursor=found>=0?'pointer':mapDrag?'grabbing':'grab';
+  });
+  mc.addEventListener('mousedown',()=>mapDrag=true);
+  mc.addEventListener('mouseup',()=>mapDrag=false);
+  mc.addEventListener('mouseleave',()=>{mapDrag=false;mapHov=-1;const cv=document.getElementById('map-canvas');if(cv&&cv._drawFn)cv._drawFn();});
+  mc.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const c=document.getElementById('map-canvas');if(!c)return;
+    const rect=c.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(c.width/rect.width),my=(e.clientY-rect.top)*(c.height/rect.height);
+    const ds=e.deltaY>0?.88:1.14;
+    mapOffX=(mapOffX-mx)*ds+mx;mapOffY=(mapOffY-my)*ds+my;
+    mapScale=Math.max(.5,Math.min(3,mapScale*ds));
+    c._drawFn&&c._drawFn();
+  },{passive:false});
+}
+
+// ── Build patient HTML report ─────────────────────────────────────
+function buildReport(){
+  const {scores,sysData,tiers,sigSites,narrative,patientName,patientAge}=state;
+  const nSig=sigSites.length;
+  const nHypo=sigSites.filter(s=>s.Delta<0).length;
+  const nHyper=sigSites.filter(s=>s.Delta>0).length;
+  const narr=(narrative&&narrative.headline)?narrative:null;
+  const band=scoreBand(scores.ls);
+
+  // ── helpers ──────────────────────────────────────────────────────────
+  function scoreCol(v){
+    if(v>=75)return'#3AC46E';
+    if(v>=60)return'#D97706';return'#DC2626';
+  }
+  function scoreLbl(v){
+    if(v>=85)return'Excellent';if(v>=75)return'Good';
+    if(v>=65)return'Moderate';if(v>=50)return'Needs support';return'High priority';
+  }
+
+  // ── system card builder ───────────────────────────────────────────────
+  const SYS_COLORS={
+    immune:  {bg:'#FFF5F5',bc:'#FECACA',sc:'#FECACA',st:'#991B1B',color:'#B83232'},
+    epigenetic:{bg:'#FAF5FF',bc:'#E9D5FF',sc:'#E9D5FF',st:'#6B21A8',color:'#5B3A8E'},
+    stress:  {bg:'#FFF8F0',bc:'#FED7AA',sc:'#FED7AA',st:'#92400E',color:'#C45C26'},
+    neuro:   {bg:'#EFF6FF',bc:'#BFDBFE',sc:'#BFDBFE',st:'#1E40AF',color:'#2B5F8E'},
+    dna:     {bg:'#ECFDF5',bc:'#A7F3D0',sc:'#A7F3D0',st:'#065F46',color:'#3A6B4A'},
+    metabolism:{bg:'#FFFBEB',bc:'#FDE68A',sc:'#FDE68A',st:'#78350F',color:'#C48B26'},
+    circadian:{bg:'#EFF6FF',bc:'#BFDBFE',sc:'#BFDBFE',st:'#1E40AF',color:'#1F618D'},
+  };
+
+  const sysCards=SYS_IDS.map(sid=>{
+    const meta=SYS_META[sid];
+    const sd=sysData[sid];
+    const tier=tiers[sid]||2;
+    const tierLbl={1:'Primary driver',2:'Active amplifier',3:'Downstream receiver'}[tier];
+    const sc=SYS_COLORS[sid]||{bg:'#F9FAFB',bc:'#E5E7EB',sc:'#E5E7EB',st:'#374151',color:'#374151'};
+    const statusTxt=sd.n_total===0?'No significant changes':`${sd.n_hypo} activated · ${sd.n_hyper} quietened`;
+    const gH=sd.genes_hypo.slice(0,5).join(', ');
+    const gP=sd.genes_hyper.slice(0,5).join(', ');
+    const geneDesc=(gH?`Genes becoming more active: <strong>${gH}</strong>. `:'')+
+                   (gP?`Genes being quietened: <strong>${gP}</strong>.`:'');
+    const aiNarr=narr&&narr.system_narratives&&narr.system_narratives[sid]?narr.system_narratives[sid]:'';
+    return `<div class="sys-card" style="background:${sc.bg};border-color:${sc.bc};">
+      <span class="sys-icon">${meta.icon}</span>
+      <div class="sys-name">${meta.label}</div>
+      <div class="sys-plain">${sd.n_total===0?'No significant changes in this system.':aiNarr?aiNarr.split('.')[0]+'.':meta.label+' pathways showed activity.'}</div>
+      <span class="sys-status" style="background:${sc.color}18;color:${sc.color};border:1px solid ${sc.color}40;">${tierLbl} · ${statusTxt}</span>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid rgba(0,0,0,.08);padding-top:10px">${geneDesc}${aiNarr?'<br><br>'+aiNarr:''}</div>
+    </div>`;
+  }).join('');
+
+  // ── tier 1 traffic light cards ────────────────────────────────────────
+  const t1systems=SYS_IDS.filter(s=>tiers[s]===1);
+  const t1cards=t1systems.map(sid=>{
+    const meta=SYS_META[sid];
+    const aiNarr=narr&&narr.system_narratives&&narr.system_narratives[sid]?narr.system_narratives[sid]:'This system is one of the primary drivers of biological change in your results.';
+    return `<div class="traffic-item tl-red">
+      <div class="tl-level">Primary driver</div>
+      <div class="tl-title">${meta.icon} ${meta.label}</div>
+      <div class="tl-body">${aiNarr}</div>
+    </div>`;
+  }).join('');
+
+  // ── domino chain ──────────────────────────────────────────────────────
+  const chainOrder=[...SYS_IDS.filter(s=>tiers[s]===1),...SYS_IDS.filter(s=>tiers[s]===2),...SYS_IDS.filter(s=>tiers[s]===3)];
+  const chainHtml=chainOrder.slice(0,6).map((sid,i,arr)=>{
+    const meta=SYS_META[sid];
+    const sc=SYS_COLORS[sid]||{color:'#374151'};
+    const arrow=i<arr.length-1?'<div class="domino-arrow">→</div>':'';
+    return `<div class="domino" style="background:${sc.color};">
+      <span class="d-icon">${meta.icon}</span>
+      <span class="d-name">${meta.label.replace(' & ','\n& ')}</span>
+    </div>${arrow}`;
+  }).join('');
+
+  // ── watchlist ─────────────────────────────────────────────────────────
+  const watchItems=narr&&narr.watchlist?narr.watchlist:
+    ['Sleep quality and rhythm','Mood fluctuations or low motivation','Persistent fatigue','Stress sensitivity','Blood sugar and appetite changes'];
+  const checklistHtml=watchItems.map((w,i)=>{
+    const col=i<2?'var(--red)':i<4?'var(--amber)':'var(--blue)';
+    // Split on first colon if present for title/body format
+    const parts=w.split(/:\s+/);
+    const title=parts[0];
+    const body=parts.length>1?parts.slice(1).join(': '):'';
+    return `<div class="check-item">
+      <div class="check-dot" style="background:${col};"></div>
+      <div>
+        <div class="ci-title">${title}</div>
+        ${body?`<div class="ci-body">${body}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── recommendations ───────────────────────────────────────────────────
+  const recItems=narr&&narr.recommendations?narr.recommendations:
+    ['Discuss sleep quality and circadian rhythm with your physician','Request CRP and IL-6 blood markers at your next appointment','Consider melatonin timing assessment or light therapy','Review lifestyle factors: stress management, nutrition, and sleep timing'];
+  const recHtml=recItems.map((r,i)=>{
+    const nums=['01','02','03','04'];
+    return `<div class="check-item">
+      <div class="check-dot" style="background:var(--accent);border-radius:0;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;font-family:'DM Sans',sans-serif;flex-shrink:0;margin-top:0;">${nums[i]||i+1}</div>
+      <div><div class="ci-title">${r}</div></div>
+    </div>`;
+  }).join('');
+
+  // ── positive signals ──────────────────────────────────────────────────
+  const positive=narr&&narr.positive?narr.positive:'Your biology is actively responding — epigenetic changes of this scale reflect significant biological activity, not stagnation. These changes can shift again with continued therapy and lifestyle support.';
+  // Build 2-4 positive traffic items from AI or defaults
+  const posItems=narr&&narr.positive?
+    [{title:'Active biological response',body:narr.positive},
+     {title:'Systems in transition',body:'Your body is not static — it is actively remodelling. What therapy has changed, further treatment and lifestyle can continue to shift.'},
+     {title:'Epigenetic changes are reversible',body:'Unlike DNA mutations, methylation marks can change again. This is not a fixed destination.'}]:
+    [{title:'Active biological response',body:'Epigenetic changes of this scale reflect significant biological activity.'},
+     {title:'Reversible by nature',body:'Unlike DNA mutations, methylation marks can shift again with continued support.'}];
+  const posCardsHtml=posItems.map(p=>`<div class="traffic-item tl-green">
+    <div class="tl-level">Encouraging</div>
+    <div class="tl-title">${p.title}</div>
+    <div class="tl-body">${p.body}</div>
+  </div>`).join('');
+
+  // ── map narrative ─────────────────────────────────────────────────────
+  const mapNarr=narr&&narr.map_narrative?narr.map_narrative:`Your 7 biological systems are shown as connected hubs. The arrows show how activity in one system sends pressure to others. Tier 1 hubs (T1) are the primary drivers right now. Tier 2 systems amplify and respond. Tier 3 systems absorb the downstream pressure — and are often where symptoms are felt most directly. Hover to explore connections.`;
+
+  // ── summary ───────────────────────────────────────────────────────────
+  const headline=narr?narr.headline:`${patientName}'s analysis found ${nSig} significant methylation changes across 7 biological systems.`;
+  const summary=narr?narr.summary:`Analysis of 269,094 methylation markers found ${nSig} significant changes — ${nHypo} genes becoming more active and ${nHyper} being quietened. The primary drivers are ${SYS_IDS.filter(s=>tiers[s]===1).map(s=>SYS_META[s].label).join(' and ')}.`;
+
+  // ── score gauge (small SVG ring) ──────────────────────────────────────
+  const lsCol=scoreCol(scores.ls);
+  const lsDash=((scores.ls/100)*175.9).toFixed(0);
+  const domGauge=(lbl,abbr,v)=>{
+    const col=scoreCol(v);const d=((v/100)*175.9).toFixed(0);
+    return `<div class="score-cell">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--xmuted);margin-bottom:10px">${lbl}</div>
+      <div style="position:relative;width:64px;height:64px;margin:0 auto 8px">
+        <svg viewBox="0 0 72 72" width="64" height="64">
+          <circle cx="36" cy="36" r="28" fill="none" stroke="#E2E8E2" stroke-width="6"/>
+          <circle cx="36" cy="36" r="28" fill="none" stroke="${col}" stroke-width="6"
+            stroke-dasharray="${d} 175.9" stroke-linecap="round" transform="rotate(-90 36 36)"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:15px;font-weight:700;color:${col}">${v}</div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--xdark)">${scoreLbl(v)}</div>
+      <div style="font-size:10px;color:var(--xmuted);margin-top:2px">${abbr}</div>
+    </div>`;
+  };
+
+  // ── interaction map data ──────────────────────────────────────────────
+  const cnts=JSON.stringify(SYS_IDS.map(s=>sysData[s].n_total));
+  const cols=JSON.stringify(SYS_IDS.map(s=>SYS_COLORS[s]?SYS_COLORS[s].color:SYS_META[s].color));
+  const lbls=JSON.stringify(SYS_IDS.map(s=>SYS_META[s].label.replace(" & ","\n& ").replace(" / ","\n/ ")));
+  const icos=JSON.stringify(SYS_IDS.map(s=>SYS_META[s].icon));
+  const trs=JSON.stringify(SYS_IDS.map(s=>tiers[s]||2));
+  const clinNote=narr&&narr.clinical_note?`<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:20px 24px;margin-top:24px"><div style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#C48B26;margin-bottom:6px">Clinical note · for treating physician</div><p style="color:#78350F;font-size:14px">${narr.clinical_note}</p></div>`:'';
+  // ── Specialist panel sections ────────────────────────────────────────
+  const SPEC_META_LOCAL={
+    'Nutritional Epigenomics':     {icon:'🥗',color:'#3A6B4A',bg:'#F3FAF5',bc:'#A7F3D0'},
+    'Hair Follicle & AGA':         {icon:'💆',color:'#5B3A8E',bg:'#FAF5FF',bc:'#E9D5FF'},
+    'Joint & Cartilage Health':    {icon:'🦴',color:'#C45C26',bg:'#FFF8F0',bc:'#FED7AA'},
+    'Surgical Recovery & Repair':  {icon:'🔬',color:'#2B5F8E',bg:'#EFF6FF',bc:'#BFDBFE'},
+    'Cardiovascular & Endothelial':{icon:'❤️',color:'#B83232',bg:'#FFF5F5',bc:'#FECACA'},
+    'Sex Hormone & Reproductive':  {icon:'⚖️',color:'#C48B26',bg:'#FFFBEB',bc:'#FDE68A'},
+  };
+
+  const activeSpec=[...document.querySelectorAll('.proto-toggle.on .proto-label')].map(el=>el.textContent.trim());
+
+  let specialistSectionsHtml='';
+  if(activeSpec.length){
+    const panelData=narr&&narr.specialist_panels?narr.specialist_panels:{};
+    specialistSectionsHtml=`<hr class="divider">
+<section class="section" id="s-specialist">
+  <p class="section-number">07 — Specialist panel analysis</p>
+  <h2>Additional insights from your<br><em>selected specialist panels.</em></h2>
+  <p>Based on your core methylation data, here is what the patterns suggest for each specialist area you selected.</p>
+  ${activeSpec.map((panel,pi)=>{
+    const meta=SPEC_META_LOCAL[panel]||{icon:'🔬',color:'#374151',bg:'#F9FAFB',bc:'#E5E7EB'};
+    const pd=panelData[panel]||{};
+    const overview=pd.overview||'Analysis of your core methylation data provides context for this specialist area. Full specialist panel data would require dedicated marker arrays.';
+    const findings=pd.findings||['Cross-system methylation patterns are relevant to this area','Core system data provides biological context','Discuss with your specialist for targeted assessment'];
+    const recs=pd.recommendations||['Consult a specialist in this area','Share this report with your treating physician','Consider targeted testing for this area'];
+    const highlight=pd.highlight||'Your core methylation data provides relevant context for this specialist area.';
+    return `<div style="background:${meta.bg};border:1px solid ${meta.bc};border-left:4px solid ${meta.color};border-radius:14px;padding:28px 32px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <span style="font-size:32px">${meta.icon}</span>
+        <div>
+          <div style="font-family:'Inter',system-ui,sans-serif;font-size:20px;font-weight:400;color:var(--ink)">${panel}</div>
+          <div style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${meta.color};margin-top:2px">Specialist Panel ${pi+1} of ${activeSpec.length}</div>
+        </div>
+      </div>
+      <div style="background:${meta.color}15;border-radius:8px;padding:14px 18px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${meta.color};margin-bottom:6px">Key highlight</div>
+        <p style="font-family:'Inter',system-ui,sans-serif;font-size:16px;font-weight:400;font-style:italic;color:var(--ink);margin:0">${highlight}</p>
+      </div>
+      <p style="font-size:15px;color:#3D3733;line-height:1.7;margin-bottom:16px">${overview}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${meta.color};margin-bottom:10px">What the data shows</div>
+          ${findings.map(f=>`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${meta.color};flex-shrink:0;margin-top:6px"></div>
+            <div style="font-size:14px;color:#3D3733;line-height:1.5">${f}</div>
+          </div>`).join('')}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${meta.color};margin-bottom:10px">Recommendations</div>
+          ${recs.map((r,ri)=>`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px">
+            <div style="width:20px;height:20px;border-radius:50%;background:${meta.color};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${ri+1}</div>
+            <div style="font-size:14px;color:#3D3733;line-height:1.5">${r}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('')}
+</section>`;
+  }
+  const specNote='';// replaced by specialistSectionsHtml
+
+  const aiFlag=narr?`<span style="background:#D1FAE5;color:#065F46;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500">✓ Regenecode™ AI narrative</span>`:`<span style="background:#FEF3C7;color:#92400E;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500">⚠ Template narrative — add API key for AI</span>`;
+
+  // ══════════════════════════════════════════════════════════════════════
+  // BUILD FULL STANDALONE REPORT HTML
+  // ══════════════════════════════════════════════════════════════════════
+  const reportHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${patientName} — Cell Intelligence Report · XELGEN</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --xgreen:#3AC46E;--xgreen2:#2EAA5C;--xdark:#0D0D0D;--xgray:#F5F6F5;
+  --xborder:#E2E8E2;--xmuted:#6B7B6B;--xtext:#1A1A1A;--xwhite:#FFFFFF;
+  --r:12px;--accent:#3AC46E;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--xwhite);color:var(--xtext);font-size:16px;line-height:1.7}
+
+/* ── LOGO SVG inline ── */
+.xelgen-logo{display:flex;align-items:center;gap:12px}
+.xelgen-logo svg{width:48px;height:48px}
+.xelgen-logo .logo-text{font-size:24px;font-weight:700;color:var(--xdark);letter-spacing:-.5px}
+
+/* ── HERO ── */
+.hero{background:var(--xdark);color:var(--xwhite);padding:72px 40px 56px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 80% 20%,rgba(58,196,110,.12) 0%,transparent 60%),
+             radial-gradient(ellipse at 10% 80%,rgba(58,196,110,.06) 0%,transparent 50%)}
+.hero-label{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;
+  color:var(--xgreen);margin-bottom:20px;display:block}
+.hero h1{font-size:clamp(32px,5.5vw,58px);font-weight:700;line-height:1.1;
+  letter-spacing:-1.5px;margin-bottom:20px;max-width:700px}
+.hero h1 em{font-style:normal;color:var(--xgreen)}
+.hero-sub{font-size:16px;color:rgba(255,255,255,.6);max-width:520px;margin-bottom:32px;font-weight:400;line-height:1.6}
+
+/* ── NAV DOTS ── */
+.nav-dots{position:fixed;right:20px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:8px;z-index:100}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:#D1D5D1;
+  cursor:pointer;transition:all .3s;border:none;padding:0}
+.nav-dot.active{background:var(--xgreen);transform:scale(1.5)}
+
+/* ── SECTIONS ── */
+.section{max-width:900px;margin:0 auto;padding:80px 32px;
+  opacity:0;transform:translateY(24px);
+  transition:opacity .6s ease,transform .6s ease}
+.section.visible{opacity:1;transform:translateY(0)}
+.section-number{font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
+  color:var(--xgreen);margin-bottom:10px;display:block}
+.section h2{font-size:clamp(24px,3.8vw,38px);font-weight:700;line-height:1.2;
+  letter-spacing:-.5px;margin-bottom:18px;color:var(--xdark)}
+.section h2 em{font-style:normal;color:var(--xgreen)}
+.section p{color:#3D453D;margin-bottom:14px;font-size:15px;line-height:1.75}
+.section p strong{font-weight:600;color:var(--xdark)}
+.divider{border:none;border-top:1px solid var(--xborder);margin:0;width:100%}
+
+/* ── ANALOGY CARD ── */
+.analogy{background:var(--xdark);color:var(--xwhite);
+  border-radius:var(--r);padding:32px 36px;margin:28px 0;
+  border-left:4px solid var(--xgreen);position:relative}
+.analogy p{font-size:17px;font-weight:400;line-height:1.65;color:rgba(255,255,255,.85)}
+.analogy p strong{color:var(--xgreen);font-weight:600}
+.analogy .analogy-label{font-size:10px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--xgreen);margin-bottom:10px;display:block}
+
+/* ── SYSTEM CARDS ── */
+.systems-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:14px;margin:28px 0}
+.sys-card{border-radius:var(--r);padding:22px;border:1.5px solid var(--xborder);
+  background:var(--xwhite);transition:all .2s}
+.sys-card:hover{border-color:var(--xgreen);box-shadow:0 4px 20px rgba(58,196,110,.1);transform:translateY(-2px)}
+.sys-card .sys-icon{font-size:28px;margin-bottom:10px;display:block}
+.sys-card .sys-name{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--xdark)}
+.sys-card .sys-plain{font-size:13px;line-height:1.55;color:var(--xmuted)}
+.sys-card .sys-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;
+  font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  padding:3px 10px;border-radius:20px;margin-top:10px}
+.sys-card .sys-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--xborder);
+  font-size:13px;color:var(--xmuted);line-height:1.6}
+
+/* ── TRAFFIC LIGHTS ── */
+.traffic-row{display:flex;gap:14px;margin:24px 0;flex-wrap:wrap}
+.traffic-item{flex:1;min-width:200px;border-radius:var(--r);padding:20px 22px;border-left:3px solid}
+.traffic-item .tl-level{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.traffic-item .tl-title{font-size:16px;font-weight:700;margin-bottom:7px;color:var(--xdark)}
+.traffic-item .tl-body{font-size:13px;line-height:1.6;color:#3D453D}
+.tl-red{background:#FFF4F4;border-color:#DC2626}.tl-red .tl-level{color:#DC2626}
+.tl-amber{background:#FFFBF0;border-color:#D97706}.tl-amber .tl-level{color:#D97706}
+.tl-green{background:#F0FBF4;border-color:var(--xgreen)}.tl-green .tl-level{color:var(--xgreen2)}
+
+/* ── DOMINO CHAIN ── */
+.domino-chain{display:flex;align-items:center;gap:0;margin:28px 0;overflow-x:auto;padding-bottom:8px}
+.domino{flex-shrink:0;color:white;border-radius:10px;padding:14px 12px;width:100px;text-align:center}
+.domino .d-icon{font-size:22px;margin-bottom:5px;display:block}
+.domino .d-name{font-size:10px;font-weight:600;line-height:1.3;white-space:pre-line}
+.domino-arrow{flex-shrink:0;color:#DC2626;font-size:20px;padding:0 3px;
+  animation:pa 1.8s ease-in-out infinite}
+@keyframes pa{0%,100%{opacity:.4;transform:scaleX(1)}50%{opacity:1;transform:scaleX(1.2)}}
+
+/* ── CHECKLIST ── */
+.checklist{margin:20px 0}
+.check-item{display:flex;gap:14px;align-items:flex-start;padding:14px 0;
+  border-bottom:1px solid var(--xborder)}
+.check-item:last-child{border-bottom:none}
+.check-dot{width:10px;height:10px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.check-item .ci-title{font-weight:600;font-size:15px;margin-bottom:3px;color:var(--xdark)}
+.check-item .ci-body{font-size:14px;color:var(--xmuted);line-height:1.6}
+
+/* ── POSITIVE BOX ── */
+.positive-box{background:var(--xgray);border:1.5px solid var(--xborder);
+  border-left:4px solid var(--xgreen);border-radius:var(--r);
+  padding:28px 32px;margin:28px 0}
+.positive-box h3{font-size:20px;font-weight:700;color:var(--xdark);margin-bottom:10px}
+.positive-box p{color:#3D453D;font-size:15px}
+
+/* ── SCORE GRID ── */
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.score-cell{background:var(--xgray);border:1.5px solid var(--xborder);
+  border-radius:var(--r);padding:16px;text-align:center}
+
+/* ── HIGHLIGHT BOX ── */
+.highlight-box{background:var(--xgreen);border-radius:var(--r);
+  padding:18px 22px;margin-bottom:16px}
+.highlight-box .hl-label{font-size:10px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:rgba(0,0,0,.5);margin-bottom:5px}
+.highlight-box p{font-size:16px;font-weight:600;color:var(--xdark);margin:0;line-height:1.5}
+
+/* ── DETAILS ── */
+details{margin:8px 0}
+summary{cursor:pointer;padding:12px 16px;background:var(--xgray);
+  border:1.5px solid var(--xborder);border-radius:8px;
+  font-weight:600;font-size:14px;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;transition:all .2s}
+summary:hover{border-color:var(--xgreen);background:#EFF8F2}
+summary::after{content:'+';font-size:18px;color:var(--xgreen)}
+details[open] summary::after{content:'\u2212'}
+details .detail-body{padding:16px 18px;font-size:14px;color:var(--xmuted);
+  line-height:1.65;border-left:3px solid var(--xgreen);
+  margin:5px 0 0 4px;background:var(--xgray);border-radius:0 8px 8px 0}
+
+/* ── MAP CANVAS ── */
+#map-canvas{cursor:grab;border-radius:10px;background:#0D0D0D;display:block}
+#map-canvas:active{cursor:grabbing}
+
+/* ── REGEN BADGE ── */
+.regen-badge{display:inline-flex;align-items:center;gap:7px;
+  font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--xmuted);padding:8px 16px;border:1.5px solid var(--xborder);
+  border-radius:20px;margin-top:28px}
+.rdot{width:7px;height:7px;border-radius:50%;background:var(--xgreen);
+  animation:dp 2s ease-in-out infinite}
+@keyframes dp{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── FOOTER ── */
+footer{background:var(--xdark);color:rgba(255,255,255,.45);
+  padding:40px;text-align:center;font-size:13px;line-height:1.7}
+footer strong{color:rgba(255,255,255,.7)}
+
+@media(max-width:600px){
+  .hero{padding:56px 20px 40px}
+  .section{padding:56px 16px}
+  .traffic-row{flex-direction:column}
+  .systems-grid{grid-template-columns:1fr 1fr}
+  .nav-dots{display:none}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-dots" aria-label="Page sections">
+  <button class="nav-dot active" onclick="scrollTo(0,0)" title="Top"></button>
+  <button class="nav-dot" onclick="document.getElementById('s1').scrollIntoView({behavior:'smooth'})" title="What happened"></button>
+  <button class="nav-dot" onclick="document.getElementById('s2').scrollIntoView({behavior:'smooth'})" title="Your systems"></button>
+  <button class="nav-dot" onclick="document.getElementById('s3').scrollIntoView({behavior:'smooth'})" title="Why it matters"></button>
+  <button class="nav-dot" onclick="document.getElementById('s4').scrollIntoView({behavior:'smooth'})" title="What to watch"></button>
+  <button class="nav-dot" onclick="document.getElementById('s5').scrollIntoView({behavior:'smooth'})" title="Positive signs"></button>
+  <button class="nav-dot" onclick="document.getElementById('s6').scrollIntoView({behavior:'smooth'})" title="Next steps"></button>
+  ${activeSpec.length?'<button class=\"nav-dot\" onclick=\"document.getElementById(\'s-specialist\').scrollIntoView({behavior:\'smooth\'})\" title=\"Specialist panels\"></button>':''}
+</nav>
+
+<header class="hero">
+<div style="max-width:900px;margin:0 auto;padding:0 32px">
+  <!-- XELGEN logo -->
+  <div class="xelgen-logo" style="margin-bottom:48px">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Dotted X pattern in green -->
+      <rect x="4"  y="4"  width="6" height="6" rx="1" fill="#3AC46E" opacity=".3"/>
+      <rect x="12" y="4"  width="6" height="6" rx="1" fill="#3AC46E" opacity=".5"/>
+      <rect x="30" y="4"  width="6" height="6" rx="1" fill="#3AC46E" opacity=".5"/>
+      <rect x="38" y="4"  width="6" height="6" rx="1" fill="#3AC46E" opacity=".3"/>
+      <rect x="8"  y="12" width="6" height="6" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="34" y="12" width="6" height="6" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="14" y="18" width="6" height="6" rx="1" fill="#3AC46E" opacity=".8"/>
+      <rect x="28" y="18" width="6" height="6" rx="1" fill="#3AC46E" opacity=".8"/>
+      <rect x="21" y="21" width="6" height="6" rx="1" fill="#3AC46E"/>
+      <rect x="14" y="28" width="6" height="6" rx="1" fill="#3AC46E" opacity=".8"/>
+      <rect x="28" y="28" width="6" height="6" rx="1" fill="#3AC46E" opacity=".8"/>
+      <rect x="8"  y="34" width="6" height="6" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="34" y="34" width="6" height="6" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="4"  y="40" width="6" height="6" rx="1" fill="#3AC46E" opacity=".3"/>
+      <rect x="38" y="40" width="6" height="6" rx="1" fill="#3AC46E" opacity=".3"/>
+    </svg>
+    <span class="logo-text">XELGEN</span>
+  </div>
+  <span class="hero-label">Cell Intelligence Report · Regenecode™ · ${aiFlag}</span>
+  <h1>Your body has been<br><em>rewriting itself.</em></h1>
+  <p class="hero-sub">${headline}</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+    <span style="background:rgba(58,196,110,.12);border:1px solid rgba(58,196,110,.25);
+      border-radius:20px;padding:4px 14px;font-size:11px;font-weight:600;color:var(--xgreen)">
+      Patient: ${patientName}</span>
+    <span style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+      border-radius:20px;padding:4px 14px;font-size:11px;color:rgba(255,255,255,.6)">
+      ${nSig} significant changes</span>
+    <span style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+      border-radius:20px;padding:4px 14px;font-size:11px;color:rgba(255,255,255,.6)">
+      Longevity Score ${scores.ls}/100</span>
+    <span style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+      border-radius:20px;padding:4px 14px;font-size:11px;color:rgba(255,255,255,.6)">
+      269,094 markers</span>
+  </div>
+</div>
+</header>
+
+<!-- SCORE SECTION -->
+<section class="section" id="s0" style="background:var(--warm)">
+  <p class="section-number">00 — XELGEN Longevity Score™</p>
+  <h2>Your overall <em>cellular health score.</em></h2>
+  <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;margin-bottom:24px">
+    <div style="position:relative;width:140px;height:140px;flex-shrink:0">
+      <svg viewBox="0 0 140 140" width="140" height="140">
+        <circle cx="70" cy="70" r="56" fill="none" stroke="#DDD6CE" stroke-width="10"/>
+        <circle cx="70" cy="70" r="56" fill="none" stroke="${lsCol}" stroke-width="10"
+          stroke-dasharray="${((scores.ls/100)*351.9).toFixed(0)} 351.9" stroke-linecap="round" transform="rotate(-90 70 70)">
+          <animate attributeName="stroke-dasharray" from="0 351.9" to="${((scores.ls/100)*351.9).toFixed(0)} 351.9" dur="1.2s" fill="freeze"/>
+        </circle>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+        <div style="font-size:36px;font-weight:500;color:${lsCol};line-height:1">${scores.ls}</div>
+        <div style="font-size:11px;color:var(--muted)">/100</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${lsCol};margin-bottom:6px">XELGEN Longevity Score™</div>
+      <div style="font-family:'Inter',system-ui,sans-serif;font-size:22px;font-weight:400;margin-bottom:10px">${band.label}</div>
+      <p style="font-size:14px;max-width:400px">${summary}</p>
+      <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap">
+        <div style="background:var(--cream);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18px;font-weight:500;color:${lsCol}">${scores.baas}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Age alignment</div></div>
+        <div style="background:var(--cream);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18px;font-weight:500;color:${lsCol}">${scores.aps}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Ageing pace</div></div>
+        <div style="background:var(--cream);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18px;font-weight:500;color:${lsCol}">${scores.sis}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">System integration</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="score-grid">
+    ${domGauge('Cardiovascular','CVR',scores.domain.cvr)}
+    ${domGauge('Metabolic','MSS',scores.domain.mss)}
+    ${domGauge('Immune','IRS',scores.domain.irs)}
+    ${domGauge('Neuro / Cognitive','NRS',scores.domain.nrs)}
+    ${domGauge('Oxidative Stress','OSR',scores.domain.osr)}
+    ${domGauge('Recovery','RCS',scores.domain.rcs)}
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SECTION 1: THE ANALOGY -->
+<section class="section" id="s1">
+  <p class="section-number">01 — What happened</p>
+  <h2>Think of your DNA like a <em>musical score.</em></h2>
+  <p>Every cell in your body contains the same set of genes — like a complete musical score. What determines which parts play, and how loudly, is the <strong>methylation layer</strong> — tiny chemical markers that act like pencil marks telling sections to play softly or stay silent.</p>
+  <p>Your test measured <strong>269,094 of these marks</strong> — before and after your therapy — and found that <strong>${nSig} of them changed significantly</strong> (${nHypo} genes became more active, ${nHyper} were quietened).</p>
+  <div class="analogy">
+    <p class="analogy-label">The analogy</p>
+    <p>Imagine someone quietly erasing and adding pencil marks on your body's musical score during therapy. Some sections that were too loud got quietened. Some that had been muffled started to play again. The result is a different orchestration of the same music — your same genes, now expressed differently.</p>
+  </div>
+  <p>This is called <strong>epigenetic remodelling</strong>. It's real, measurable, and — unlike changes to the DNA itself — it can shift again over time.</p>
+</section>
+
+<hr class="divider">
+
+<!-- SECTION 2: SEVEN SYSTEMS -->
+<section class="section" id="s2">
+  <p class="section-number">02 — Your seven systems</p>
+  <h2>The changes touched <em>seven areas</em> of your biology.</h2>
+  <p>Your body doesn't work in isolated departments — everything talks to everything else. The ${nSig} changed sites clustered into seven biological systems. <strong>Tap any card</strong> to learn more.</p>
+  <div class="systems-grid">${sysCards}</div>
+</section>
+
+<hr class="divider">
+
+<!-- SECTION 3: WHY IT MATTERS — THE CHAIN REACTION -->
+<section class="section" id="s3">
+  <p class="section-number">03 — Why it matters</p>
+  <h2>These systems don't act alone —<br>they <em>talk to each other.</em></h2>
+  <p>${mapNarr}</p>
+  <div class="analogy">
+    <p class="analogy-label">Think of it like this</p>
+    <p>Imagine a household where the thermostat is stuck on high, the smoke alarm keeps going off, and the circuit breaker is playing up — all at once. Each would be manageable alone. Together, they make every other system in the house work harder.</p>
+  </div>
+  <p>Your primary drivers are:</p>
+  <div class="traffic-row">${t1cards}</div>
+  <p style="margin-top:8px">These systems are now putting pressure on the rest:</p>
+  <div class="domino-chain">${chainHtml}</div>
+
+  <!-- INTERACTION MAP -->
+  <div style="background:var(--xdark);border-radius:12px;border:1.5px solid #222;padding:16px;margin:32px 0">
+    <canvas id="map-canvas" width="820" height="460" style="width:100%;height:auto"></canvas>
+  </div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--muted)">
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:20px;height:2px;background:#B83232;display:inline-block"></span>High stress pathway</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:20px;height:2px;background:#B7770D;display:inline-block"></span>Moderate pathway</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:20px;height:2px;background:#C8B820;display:inline-block"></span>Low pathway</span>
+  </div>
+  ${specNote}
+</section>
+
+<hr class="divider">
+
+<!-- SECTION 4: WHAT TO WATCH -->
+<section class="section" id="s4">
+  <p class="section-number">04 — What to watch for</p>
+  <h2>Symptoms worth <em>tracking and discussing</em> with your doctor.</h2>
+  <p>These are not predictions — they are signals that your biology suggests warrant attention. They are worth noting if they arise or worsen.</p>
+  <div class="checklist">${checklistHtml}</div>
+</section>
+
+<hr class="divider">
+
+<!-- SECTION 5: THE OTHER SIDE — POSITIVE SIGNS -->
+<section class="section" id="s5">
+  <p class="section-number">05 — The other side</p>
+  <h2>There are genuinely <em>encouraging signals</em> too.</h2>
+  <div class="positive-box">
+    <h3>What these results also show</h3>
+    <p>Epigenetic changes of this scale don't happen without significant biological activity. Your body is not static — it is actively responding.</p>
+  </div>
+  <div class="traffic-row" style="margin-top:0">${posCardsHtml}</div>
+  <div class="analogy" style="margin-top:32px">
+    <p class="analogy-label">The bottom line</p>
+    <p>Your body has been through something significant, and it shows in the biology. What these results capture is a system in transition — not a broken system. The goal now is to understand which instruments are playing too loudly, which are muted, and work with your care team to bring the orchestra back into tune.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SECTION 6: RECOMMENDATIONS + NEXT STEPS -->
+<section class="section" id="s6">
+  <p class="section-number">06 — Practical next steps</p>
+  <h2>Actions and questions to bring to<br>your <em>next appointment.</em></h2>
+  <p>You don't need to understand every gene name. These are grounded in your actual results.</p>
+  <div class="checklist" style="margin-bottom:32px">${recHtml}</div>
+
+  <details><summary>About my sleep and body clock</summary>
+  <div class="detail-body">My circadian clock genes are showing significant methylation changes. Can we discuss whether a sleep study, melatonin timing assessment, or light therapy might be appropriate? I'd like to track my sleep quality more systematically.</div></details>
+  <details><summary>About my stress and cortisol levels</summary>
+  <div class="detail-body">My cortisol receptor genes (NR3C1, FKBP5) appear more active. Could we do a diurnal cortisol saliva test to see whether my HPA axis is physiologically elevated? I want to understand whether my stress response is biologically shifted, not just perceived.</div></details>
+  <details><summary>About inflammation and immune markers</summary>
+  <div class="detail-body">Can we check CRP, IL-6, and TNF-alpha in my next blood panel? I'd like to know if there's measurable systemic inflammation and what our options are if there is.</div></details>
+  <details><summary>About my brain health and mood</summary>
+  <div class="detail-body">Is there a role for omega-3 supplementation, exercise prescription, or other BDNF-supportive interventions? My results show active remodelling in brain signalling pathways.</div></details>
+  <details><summary>About follow-up retesting</summary>
+  <div class="detail-body">Given the scale of change, is it worth retesting in 3–6 months to see whether these patterns are stabilising? What would trigger you to refer me to a specialist?</div></details>
+  ${clinNote}
+  <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 14px;border:1px solid #DDD6CE;border-radius:4px;margin-top:28px">
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:dp 2s ease-in-out infinite"></span>
+    Regenecode™ · XELGEN Cell Intelligence · Scoring System v1.0 · 269,094 markers
+  </div>
+</section>
+
+${specialistSectionsHtml}
+
+<footer>
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px">
+    <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+      <rect x="2"  y="2"  width="4" height="4" rx="1" fill="#3AC46E" opacity=".3"/>
+      <rect x="8"  y="2"  width="4" height="4" rx="1" fill="#3AC46E" opacity=".5"/>
+      <rect x="20" y="2"  width="4" height="4" rx="1" fill="#3AC46E" opacity=".5"/>
+      <rect x="26" y="2"  width="4" height="4" rx="1" fill="#3AC46E" opacity=".3"/>
+      <rect x="5"  y="8"  width="4" height="4" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="23" y="8"  width="4" height="4" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="12" y="13" width="4" height="4" rx="1" fill="#3AC46E" opacity=".9"/>
+      <rect x="16" y="13" width="4" height="4" rx="1" fill="#3AC46E"/>
+      <rect x="12" y="17" width="4" height="4" rx="1" fill="#3AC46E" opacity=".9"/>
+      <rect x="5"  y="22" width="4" height="4" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="23" y="22" width="4" height="4" rx="1" fill="#3AC46E" opacity=".6"/>
+      <rect x="2"  y="28" width="4" height="4" rx="1" fill="#3AC46E" opacity=".3"/>
+      <rect x="26" y="28" width="4" height="4" rx="1" fill="#3AC46E" opacity=".3"/>
+    </svg>
+    <strong>XELGEN · Cell Intelligence Report · ${patientName}</strong>
+  </div>
+  <p>Scores are XELGEN-derived composite interpretation scores based on measured epigenetic data — not raw lab outputs. This is an educational tool, not a diagnosis. All clinical decisions should be made with your healthcare team.</p>
+  <p style="margin-top:8px;font-size:11px">Illumina Infinium MSA · M-GL-01893 v2.0 · Regenecode™ · For Research Use Only</p>
+</footer>
+
+\x3cscript\x3e\nconst MAT=[[0,3,3,3,2,2,2],[3,0,2,3,3,2,2],[3,3,0,3,2,3,2],[1,1,2,0,1,2,2],[2,2,1,1,0,2,3],[2,2,2,2,1,0,3],[3,1,2,2,2,3,0]];
+const CNTS=${cnts};const COLS=${cols};const LBLS=${lbls};const ICONS=${icos};const TIERS=${trs};
+const N=7,canvas=document.getElementById('map-canvas'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height,CX=W/2,CY=H/2,R=Math.min(W,H)*0.33;
+let sc=1,ox=0,oy=0,drag=false,hov=-1;
+function hp(i){const a=(i/N)*Math.PI*2-Math.PI/2;return[CX+Math.cos(a)*R,CY+Math.sin(a)*R]}
+function nr(i){return 26+Math.min(CNTS[i]*1.5,22)}
+function ac(s){return s===3?'#B83232':s===2?'#B7770D':'#C8B820'}
+function draw(){
+  ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(ox,oy);ctx.scale(sc,sc);
+  ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=.5;ctx.stroke();
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+    const s=MAT[i][j];if(!s)continue;
+    const[sx,sy]=hp(i),[tx,ty]=hp(j);
+    const dx=tx-sx,dy=ty-sy,dist=Math.sqrt(dx*dx+dy*dy);
+    const px=-dy/dist*5,py=dx/dist*5,nrj=nr(j);
+    const ax=sx+px+(tx-sx)*nr(i)/dist,ay=sy+py+(ty-sy)*nr(i)/dist;
+    const ex=tx+px-(tx-sx)*nrj/dist,ey=ty+py-(ty-sy)*nrj/dist;
+    const isH=hov===i||hov===j;
+    const alpha=hov<0?(s===3?.85:s===2?.55:.3):(isH?.95:.08);
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ex,ey);
+    ctx.strokeStyle=ac(s)+(Math.round(alpha*255).toString(16).padStart(2,'0'));
+    ctx.lineWidth=s*1.1;ctx.stroke();
+    const ang=Math.atan2(ey-ay,ex-ax),hs=7+s*2;
+    ctx.beginPath();ctx.moveTo(ex,ey);
+    ctx.lineTo(ex-hs*Math.cos(ang-.4),ey-hs*Math.sin(ang-.4));
+    ctx.lineTo(ex-hs*Math.cos(ang+.4),ey-hs*Math.sin(ang+.4));
+    ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill();
+  }
+  for(let i=0;i<N;i++){
+    const[hx,hy]=hp(i),nri=nr(i),col=COLS[i],tier=TIERS[i],isH=hov===i;
+    if(tier===1){ctx.beginPath();ctx.arc(hx,hy,nri+10,0,Math.PI*2);ctx.strokeStyle=col+'25';ctx.lineWidth=2;ctx.stroke();}
+    ctx.beginPath();ctx.arc(hx,hy,isH?nri+3:nri,0,Math.PI*2);ctx.fillStyle=col+(isH?'FF':'EE');ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.font=Math.floor(nri*.55)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='white';ctx.fillText(ICONS[i],hx,hy-4);
+    const tc=['','#3de8b0','#f0b429','#87CEEB'];
+    ctx.font='bold 9px sans-serif';ctx.fillStyle=tc[tier]||'#aaa';ctx.fillText('T'+tier,hx,hy+nri*.42);
+    const la=(i/N)*Math.PI*2-Math.PI/2,lx=hx+Math.cos(la)*(nri+20),ly=hy+Math.sin(la)*(nri+20);
+    ctx.font='bold 10px sans-serif';ctx.fillStyle='#F0EAE0';ctx.textAlign='center';ctx.textBaseline='middle';
+    const pts=LBLS[i].split('\\n');pts.forEach((p,pi)=>ctx.fillText(p,lx,ly+(pi-(pts.length-1)/2)*13));
+    if(CNTS[i]>0){ctx.font='bold 10px monospace';ctx.fillStyle='rgba(196,140,38,.9)';ctx.fillText(CNTS[i],hx,hy+12);}
+  }
+  ctx.font='bold 13px sans-serif';ctx.fillStyle='#C48B26';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('${patientName}',CX,CY-8);
+  ctx.font='10px monospace';ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillText('${nSig} changes',CX,CY+8);
+  ctx.restore();
+}
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect(),scX=W/rect.width,scY=H/rect.height;
+  if(drag){ox+=(e.movementX||0)*scX;oy+=(e.movementY||0)*scY;draw();return;}
+  const mx=(e.clientX-rect.left)*scX,my=(e.clientY-rect.top)*scY;
+  const wx=(mx-ox)/sc,wy=(my-oy)/sc;
+  let found=-1;
+  for(let i=0;i<N;i++){const[hx,hy]=hp(i);if((wx-hx)**2+(wy-hy)**2<(nr(i)+5)**2){found=i;break;}}
+  if(found!==hov){hov=found;draw();}canvas.style.cursor=found>=0?'pointer':'grab';
+});
+canvas.addEventListener('mousedown',()=>drag=true);
+canvas.addEventListener('mouseup',()=>drag=false);
+canvas.addEventListener('mouseleave',()=>{drag=false;hov=-1;draw();});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width),my=(e.clientY-rect.top)*(H/rect.height);
+  const ds=e.deltaY>0?.88:1.14;ox=(ox-mx)*ds+mx;oy=(oy-my)*ds+my;
+  sc=Math.max(.4,Math.min(3,sc*ds));draw();
+},{passive:false});
+draw();
+
+// Scroll animations
+const sections=document.querySelectorAll('.section');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.08});
+sections.forEach(s=>obs.observe(s));
+// Nav dots
+const dots=document.querySelectorAll('.nav-dot');
+const secEls=['s1','s2','s3','s4','s5','s6'].map(id=>document.getElementById(id)).filter(Boolean);
+const dotObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const idx=secEls.indexOf(e.target);dots.forEach((d,i)=>d.classList.toggle('active',i===idx+1));}});},{threshold:0.4});
+secEls.forEach(s=>dotObs.observe(s));
+\x3c/script\x3e\n</body>
+</html>`;
+
+  state.reportHtml=reportHtml;
+  document.getElementById('pr-content').innerHTML=`
+    <div style="background:#111318;border:.5px solid #1E2230;border-radius:12px;padding:24px;text-align:center">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Report ready</div>
+      <div style="font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);margin-bottom:8px">${patientName} · Health Story Report</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Longevity Score ${scores.ls}/100 · ${nSig} changes · 6 narrative sections · Interactive interaction map · ${narr?'Regenecode™ AI narrative':'Template narrative'}</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+        <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--accent)">✓ Musical score analogy intro</span>
+        <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--accent)">✓ 7 expandable system cards</span>
+        <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--accent)">✓ Domino chain + interaction map</span>
+        <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--accent)">✓ Traffic light watchlist</span>
+        <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:${narr?'var(--teal)':'var(--amber)'}">✓ ${narr?'AI-personalised narrative':'Template — add API key for AI'}</span>
+        <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--accent)">✓ Scroll animations + nav dots</span>
+      </div>
+      <button onclick="downloadReport()" style="background:var(--accent);color:#000;border:none;padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">↓ Download patient report</button>
+    </div>`;
+  markStep(6,'done');
+}
+
+function addToQueue(name,pid,nSig,ls){
+  state.queue.push({name,pid,nSig,ls,time:new Date().toTimeString().slice(0,8),data:JSON.parse(JSON.stringify({
+    patientName:state.patientName,patientId:state.patientId,patientAge:state.patientAge,
+    patientBioAge:state.patientBioAge,patientAAF:state.patientAAF,
+    sigSites:state.sigSites,sysData:state.sysData,tiers:state.tiers,
+    scores:state.scores,narrative:state.narrative,reportHtml:state.reportHtml
+  }))});
+  document.getElementById('badge-queue').textContent=state.queue.length;
+  renderQueue();
+}
+
+function renderQueue(){
+  const list=document.getElementById('queue-list');
+  if(!state.queue.length){
+    list.innerHTML='<div style="color:var(--text3);font-size:13px">No patients processed yet. Upload data to begin.</div>';
+    return;
+  }
+  list.innerHTML=state.queue.map((q,i)=>`
+    <div class="queue-item">
+      <div class="qi-status" style="background:var(--accent)"></div>
+      <div class="qi-name">${q.name}</div>
+      <div class="qi-meta">${q.pid} · ${q.nSig} sites · Score ${q.ls}/100 · ${q.time}</div>
+      <button class="qi-action" onclick="reloadPatient(${i})">View →</button>
+    </div>`).join('');
+}
+
+function reloadPatient(i){
+  const q=state.queue[i];
+  state.patientName=q.data.patientName;
+  state.patientId=q.data.patientId;
+  state.patientAge=q.data.patientAge;
+  state.patientBioAge=q.data.patientBioAge;
+  state.patientAAF=q.data.patientAAF;
+  state.sigSites=q.data.sigSites;
+  state.sysData=q.data.sysData;
+  state.tiers=q.data.tiers;
+  state.scores=q.data.scores;
+  state.narrative=q.data.narrative;
+  state.reportHtml=q.data.reportHtml;
+  buildResults();
+  buildReport();
+  showView('results');
+}
+
+function downloadReport(){
+  if(!state.reportHtml){alert('No report generated yet. Run the pipeline first.');return;}
+  // reportHtml already contains the full valid HTML — just download it directly
+  const blob=new Blob([state.reportHtml],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(state.patientName||'patient').replace(/[^a-zA-Z0-9]/g,'_')+'_XELGEN_report.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+
+
+function downloadJSON(){
+  const out={patient:{name:state.patientName,id:state.patientId,age:state.patientAge},stats:{n_significant:state.sigSites.length,n_hypo:state.sigSites.filter(s=>s.Delta<0).length,n_hyper:state.sigSites.filter(s=>s.Delta>0).length},scores:state.scores,tiers:state.tiers,systems:state.sysData};
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${state.patientName||'patient'}_XELGEN_data.json`;a.click();
+}
+function resetPipeline(){
+  setProgress(0,'Waiting to start...');
+  state.rawData=null;state.sigSites=[];state.scores={};state.narrative='';
+  clearFile();
+  document.getElementById('process-log').innerHTML='<div class="log-line">Waiting to start pipeline...</div>';
+  ['pc-1','pc-2','pc-3','pc-4','pc-5','pc-6'].forEach(id=>document.getElementById(id).className='pipe-circle');
+  ['con-1','con-2','con-3','con-4','con-5'].forEach(id=>document.getElementById(id).className='pipe-connector');
+  ['1','2','3','4','5','6'].forEach(n=>markStep(n,''));
+  mapScale=1;mapOffX=0;mapOffY=0;
+  showView('upload');
+  setStatus('Pipeline ready');
+}
+function loadDemo(){
+  document.getElementById('pt-name').value='Nagisa';
+  document.getElementById('pt-id').value='XG-2025-001';
+  document.getElementById('pt-age').value='42';
+  document.getElementById('pt-bio-age').value='38.5';
+  document.getElementById('pt-aaf').value='0.92';
+  document.getElementById('pt-protocol').value='exosome_monthly';
+  document.getElementById('pt-clinician').value='Dr Smith';
+  alert('Demo patient loaded. Please upload a real CSV/XLSX patient file to run the full analysis.');
+}
+</script>
+</body>
+</html>
